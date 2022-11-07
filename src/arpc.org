@@ -1,0 +1,17 @@
+#+title: Activity Recognition Protocol Framework
+
+Neste documento desejo descrever e desenvolver um framework orientado a objeto em python
+para experimentar com classificação de atividades humanas.
+
+Inicialmente a ideia é criar uma classe com atributos para cada etapa do protocolo ARP,
+de forma que antes de cada etapa ser executada, o valor do atributo é None, e a próxima
+etapa poderá executada somente quando o dado em que depende estiver disponível.
+# https://docs.python.org/3/tutorial/classes.html
+#+begin_src python
+class Arpc:
+    def __init__(self):
+        this.raw_data          = None
+        this.preprocessed_data = None
+        this.segmented_data    = None
+        this.featured_data     = None
+#+end_src

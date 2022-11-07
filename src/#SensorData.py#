@@ -45,7 +45,7 @@ def aip_gen(df, select=[]):
         for s in select:
             yield df.loc[(df['Atividade']    == s[1]) &
                          (df['Intensidade']  == s[2]) &
-                         (df['Participante'] == s[0])]
+                         (df['Participante'] == s[0])   ]
         return
 
     for a in atividades:
@@ -53,7 +53,7 @@ def aip_gen(df, select=[]):
             for p in participantes:
                 yield df.loc[(df['Atividade']    == a) &
                              (df['Intensidade']  == i) &
-                             (df['Participante'] == p)]
+                             (df['Participante'] == p)   ]
 
 def p_gen(df, select=[]):
     if len(select)==0:

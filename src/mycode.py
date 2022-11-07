@@ -599,7 +599,6 @@ cmat2
 """
 
 def get_all_accuracies(noIntens = False):
-
     result = {}
 
     if noIntens:
