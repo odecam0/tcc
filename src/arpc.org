@@ -15,3 +15,146 @@ class Arpc:
         this.segmented_data    = None
         this.featured_data     = None
 #+end_src
+
+* Loading raw_data
+
+Eu estava utilizando um esquema com list comprehensions para especificar o nome dos arquivos
+a serem carregados na memória pelo pandas.
+No momento em que os dados eram carregados eu adcionava valores para novas colunas que
+inicavam qual era o participante, qual a atividade e qual a intensidade.
+Esses campos eram futuramente utilizados para selecionar quais dados seriam utilizados nas
+operações.
+
+#+name: Código antigo responsável por carregar dados na memória
+#+begin_src python
+
+# for loading data
+atividades   = ['Andando', 'Sentado', 'Deitado']
+intensidades = ['Leve', 'Moderado', 'Vigoroso']
+
+p_dir        = ['Aluno'+str(i+1) for i in range(11)]
+
+
+    def __init__(self, dataset_dir  = '~/ic/dataset/data/', extension='.txt'):
+        df = pd.DataFrame(columns=['x', 'y', 'z', 'tempo', 'sensor'])
+
+        full_paths = {}
+        for p in p_dir:
+            full_paths[p] = {}
+            for a in atividades:
+                full_paths[p][a] = {}
+                for i in intensidades:
+                    full_paths[p][a][i] = dataset_dir + p + '/' + a + i + extension
+
+        participantes = list(range(len(p_dir)))
+
+        # Loading data
+        for p, pn in zip(p_dir, participantes):
+            for a in atividades:
+                for i in intensidades:
+                    df_r = pd.read_csv(full_paths[p][a][i], delim_whitespace=True,
+                                    names=['x', 'y', 'z', 'tempo', 'sensor'])\
+                            .assign(Atividade = a,
+                                    Intensidade = i,
+                                    Participante = pn)
+
+                    df_r = df_r.loc[df_r['sensor'] == 'a']
+
+                    df = pd.concat([df, df_r], ignore_index=True)
+
+        self.data = df
+        self.participantes = participantes
+#+end_src
+
+As informações necessárias para realizar o carregamento dos dados são:
+1. O diretório root onde os arquivos se encontram
+2. O esquema de nomes dos arquivos
+
+O esquema de nomes dos arquivos informa metadados sobre os dados contidos no arquivo.
+Como este esquema poderia ser informado de forma que automatize a inserção dos metadados no
+DataFrame do pandas?
+
+#+begin_src python :session name_scheme
+root_dir = "~/ic/dataset/"
+scheme   = "Aluno<participante:\d+>/<atividade:[A-Z]\w*><intensidade:[A-Z]\w*>.csv"
+#+end_src
+
+Deste esquema deveria ser possível inferir que ao carregar um arquivo na memória,
+determinados campos que fazem parte do nome do arquivo servirão para prenhcer novas
+colunas que serão criadas.
+
+Então da string 'scheme' deve ser possível extrair:
+#+begin_src python
+[('participante', r'\d+'     ),   # Nome de cada campo que será adcionado nos dados
+ ('atividade',    r'[A-Z]\w*'),   # junto com a regexp que irá buscar o valor no nome
+ ('intensidade',  r'[A-Z]\w*')]
+
+r'Aluno\d+/[A-Z]\w*[A-Z]\w*.csv' # Para selecionar todos os arquivos que serão carregados
+                                 # na memória
+#+end_src
+
+A segunda regexp deve ser usada para adquirir a lista de todos os arquivos que serão
+carregados na memória a partir do 'root_dir'.
+# https://stackoverflow.com/questions/3207219/how-do-i-list-all-files-of-a-directory
+# https://docs.python.org/2/library/os.html#os.listdir
+# https://stackoverflow.com/questions/2212643/python-recursive-folder-read
+# https://docs.python.org/3/library/os.html#os.walk
+
+#+begin_src python
+from os import walk             
+import re
+
+import Pandas as pd
+
+root_dir = "./processed_data/"
+scheme   = "Aluno<participante:\d+>/<atividade:[A-Z][a-z]*><intensidade:[A-Z][a-z]*>.csv"
+
+def load_data(self, root_dir:str, name_scheme:str):
+
+    # Extraindo nomes dos campos de metadados (names) e regexps (rgs) para
+    # encontrar seus valores nos nomes dos arquivos. E uma regexp para
+    # encontrar todos os nomes de arquivos na pasta especificada (text/rg_scheme)
+    text = name_scheme
+    names, rgs = [], []
+    while True:
+	pbegin, pend = text.find('<'), text.find('>')
+	if pbegin == -1: break
+	sub_text     = text[pbegin+1:pend]
+	st_sep       = sub_text.find(':')
+	names       += [sub_text[          :st_sep]]
+	rgs         += [sub_text[st_sep + 1:      ]]
+	text         = text[:pbegin] + rgs[-1] + text[pend + 1:]
+
+    # Contém regexp utilizada para encontrar arquivos que serão
+    # carregados na memória
+    rg_scheme = text
+
+    # Pegando lista de arquivos para carregar na memoria
+    files_to_load = []
+    for root, dirs, files in walk(root_dir):
+        for f in files:
+            if re.search(rg_scheme, str(os.path.join(root, f))):
+                files_to_load.append(os.path.join(root, f))
+
+    for f in files_to_load:
+        f_orig = f
+        
+	# Cria dicionário com campo de metadados e seu valor
+        metad = {}
+	for i in range(len(names)):
+	    f = re.sub(root_dir, "", f)
+	    m = re.search(rgs[i], f)
+	    try:
+                # Corta string pra remover oque já foi 'matched'
+		f = f[m.span()[1]:]
+		metad[names[i]] = m[0]
+	    except AttributeError as e:
+		print(e,'\nO regexp não deve ter dado match')
+
+        df = pd.DataFrame()
+	df.read_csv(f_orig, delim_whitespace=True,
+		    names=['x', 'y', 'z', 'tempo', 'sensor'])\
+          .assign(metad)
+#+end_src
+
+Comecei a me confundir muito com como eu vou tanglar isso aqui.
