@@ -34,6 +34,7 @@ intensidades = ['Leve', 'Moderado', 'Vigoroso']
 
 p_dir        = ['Aluno'+str(i+1) for i in range(11)]
 
+p_
 
     def __init__(self, dataset_dir  = '~/ic/dataset/data/', extension='.txt'):
         df = pd.DataFrame(columns=['x', 'y', 'z', 'tempo', 'sensor'])
@@ -100,7 +101,7 @@ carregados na memória a partir do 'root_dir'.
 # https://stackoverflow.com/questions/2212643/python-recursive-folder-read
 # https://docs.python.org/3/library/os.html#os.walk
 
-#+begin_src python
+#+begin_src python :tangle load_data.py
 from os import walk             
 import re
 
