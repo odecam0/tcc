@@ -155,14 +155,14 @@ sd.all_accuracies
 «scale»  (to ".scale")
 https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html
 https://scikit-learn.org/stable/modules/preprocessing.html#preprocessing-scaler
-# (find-icfile "src/SensorData.py" "def scale_data(self):")
+; (find-icfile "src/SensorData.py" "def scale_data(self):")
 exec(open("SensorData.py").read(), globals())
 sd = SensorData()
 sd.initial_fix()
 sd.segment_extract_features()
 sd.scale_data()
 sd.data
-# results = sd.get_all_accuracies(save=True, file_name='all_acuracies_standard_before_features')
+; results = sd.get_all_accuracies(save=True, file_name='all_acuracies_standard_before_features')
 results = sd.get_all_accuracies(save=True, file_name='all_acuracies_standard_after_features')
 
 scaled_data.loc[scaled_data['tempo']!=np.NaN]
@@ -178,8 +178,8 @@ sd.all_accuracies
 
 ;; saving the pre-processed data into files
 «save_all_data»  (to ".save_all_data")
-# (find-icfile "src/SensorData.py" "def save_all_data(self):")
-# (find-icfile "src/new_data/")
+; (find-icfile "src/SensorData.py" "def save_all_data(self):")
+; (find-icfile "src/new_data/")
 https://docs.python.org/3/library/os.html#os.makedirs
 exec(open("SensorData.py").read(), globals())
 sd = SensorData()
@@ -195,43 +195,43 @@ sd.save_all_data(root_dir="./new_data_standard_scale/")
 
 ;; Realizando time-warp
 «time_warp»  (to ".time_warp")
-# (find-icfile "src/SensorData.py" "def time_warp_window")
-# (find-icfile "src/SensorData.py" "class SensorData:")
-# (find-icfile "src/SensorData.py" "def save_all_data")
+; (find-icfile "src/SensorData.py" "def time_warp_window")
+; (find-icfile "src/SensorData.py" "class SensorData:")
+; (find-icfile "src/SensorData.py" "def save_all_data")
 
-# (find-icfile "src/")
-# (find-icfile "src/processed_data/")
+; (find-icfile "src/")
+; (find-icfile "src/processed_data/")
 
 exec(open("SensorData.py").read(), globals())
 sd = SensorData('./processed_data/', extension='.csv')
 sd.data
 
-#  ENTÃO! O loading dos dados está ruim
-#          Os dados salvos não possuem coluna sensor
-#          Os dados originais possuiam..
+;  ENTÃO! O loading dos dados está ruim
+;          Os dados salvos não possuem coluna sensor
+;          Os dados originais possuiam..
 
 exec(open("SensorData.py").read(), globals())
 sd = SensorData()
 sd.initial_fix()
 sd.data
 
-# (find-icfile "src/SensorData.py" "def segment_extract_features")
+; (find-icfile "src/SensorData.py" "def segment_extract_features")
 
-#  DIFICULDADE : Utilizando o pandas, eu crio um objeto
-#                 rolling do dataframe, e automáticamente
-#                 gero as métricas.
-#
-#                 Em qual ponto intermediário eu iria realizar
-#                 o time-warping?
+;  DIFICULDADE : Utilizando o pandas, eu crio um objeto
+;                 rolling do dataframe, e automáticamente
+;                 gero as métricas.
+;
+;                 Em qual ponto intermediário eu iria realizar
+;                 o time-warping?
 
 exec(open("SensorData.py").read(), globals())
 sd = SensorData()
 sd.segment_extract_features()
 
-#  Solução:
-# O objeto rolling do pandas é um iterable, então é possível
-# fazer [i for i in rolling] pra recuperar dataframes que
-# representam cada janela.
+;  Solução:
+; O objeto rolling do pandas é um iterable, então é possível
+; fazer [i for i in rolling] pra recuperar dataframes que
+; representam cada janela.
 
 «teste wf»  (to ".teste wf")
 
@@ -241,8 +241,8 @@ sd = SensorData()
 df = sd.data
 df
 
-# (find-icfile "src/SensorData.py" "def segment_extract_features")
-# (find-icfile "src/SensorData.py" "def aip_gen")
+; (find-icfile "src/SensorData.py" "def segment_extract_features")
+; (find-icfile "src/SensorData.py" "def aip_gen")
 for df_local in aip_gen(df):
     df_local  = df_local.astype({'tempo': int})
     # rolling_w = df_local[['x', 'y', 'z', 'tempo']].rolling(window=10, center=True,  on='tempo')
@@ -256,7 +256,7 @@ exec(open("TimeWarpWindow.py").read(), globals())
 
 windows           = [i                 for i in rolling_w if i.shape[0] == 10]
 augmented_windows = [warp_window(i, 2) for i in windows]
-# (find-icfile "src/TimeWarpWindow.py" "def warp_window(")
+; (find-icfile "src/TimeWarpWindow.py" "def warp_window(")
 
 from pprint import pprint
 pprint(list(zip(windows, augmented_windows)))

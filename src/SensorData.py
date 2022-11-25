@@ -22,7 +22,6 @@ from pdb import set_trace
 atividades   = ['Andando', 'Sentado', 'Deitado']
 intensidades = ['Leve', 'Moderado', 'Vigoroso']
 
-
 p_dir        = ['Aluno'+str(i+1) for i in range(11)]
 
 # for iterating over data
