@@ -5,23 +5,114 @@ para experimentar com classificação de atividades humanas.
 
 Inicialmente a ideia é criar uma classe com atributos para cada etapa do protocolo ARP,
 de forma que antes de cada etapa ser executada, o valor do atributo é None, e a próxima
-etapa poderá executada somente quando o dado em que depende estiver disponível.
+etapa poderá ser executada somente quando o dado em que depende estiver disponível.
+
 # https://docs.python.org/3/tutorial/classes.html
-#+begin_src python
+#+begin_src python :tangle ./ARPC.py
+from load_data import load_data
+
 class Arpc:
     def __init__(self):
-        this.raw_data          = None
-        this.preprocessed_data = None
-        this.segmented_data    = None
-        this.featured_data     = None
+        self.raw_data          = None
+        self.preprocessed_data = None
+        self.segmented_data    = None
+        self.featured_data     = None
+
+    def load_data(self, root_dir:str, name_scheme:str):
+        self.raw_data = load_data(root_dir, name_scheme)
 #+end_src
 
-* Loading raw_data
+#+name: arpc test
+#+begin_src python
+import ARPC
+
+test = ARPC.Arpc()
+
+# Funcionando
+test.load_data('../../dataset/data',
+               'Aluno<participante:\d+>/<atividade:[A-Z][a-z]*><intensidade:[A-Z][a-z]*>.txt')
+test.raw_data
+#+end_src
+
+* Preprocessing data
+
+A ideia para realizar o preprocessamento dos dados irá envolver um módulo com funções
+que manipulas os dados (um tipo padronizado de dados?). E na classe arpc, haverão funções para adcionarem
+funções numa lista de funções que serão utilizadas para afetar os dados contidos em obj.raw_data.
+
+# (find-fline "~/ic/src/new_design/manips.py")
+
+# (find-fline "~/ic/src/SensorData.py")
+
+# (find-fline "~/ic/src/new_design/arpc_utils.py")
+
+#+transclude: [[file:./manips.py]]  :src python
+
+#+name: teste manips
+#+begin_src python
+from ARPC import Arpc
+import manips
+
+test = Arpc()
+test.load_data('../../dataset/data',
+               'Aluno<participante:\d+>/<atividade:[A-Z][a-z]*><intensidade:[A-Z][a-z]*>.txt')
+
+test.raw_data
+manips.fix_dup(test.raw_data)
+manips.fix_dup(test.raw_data, rem_first=True)
+#+end_src
+
+# bug....
+manips.fix_dup(test.raw_data)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/home/brnm/ic/src/new_design/manips.py", line 39, in fix_dup
+    df_aux = df_it.drop(columns=['tempo']).loc[:id_base-1]
+  File "/usr/lib/python3.10/site-packages/pandas/core/frame.py", line 3977, in __setitem__
+    self._set_item(key, value)
+  File "/usr/lib/python3.10/site-packages/pandas/core/frame.py", line 4171, in _set_item
+    value = self._sanitize_column(value)
+  File "/usr/lib/python3.10/site-packages/pandas/core/frame.py", line 4904, in _sanitize_column
+    com.require_length_match(value, self.index)
+  File "/usr/lib/python3.10/site-packages/pandas/core/common.py", line 561, in require_length_match
+    raise ValueError(
+ValueError: Length of values (1206) does not match length of index (603)
+
+* Loading raw_data 
+
+Comecei a me confundir muito com como eu vou tanglar isso aqui.
+
+# (find-fline "~/ic/src/new_design/load_data.py")
+
+#+transclude: [[file:./load_data.py]]  :src python
+
+#+name: test load_data
+#+begin_src python
+import load_data
+from pprint import pprint
+
+# Funcionando como esperado
+# (find-fline "~/ic/src/new_design/load_data.py" "def process_name_scheme")
+name_scheme = "Aluno<participante:\d+>/<atividade:[A-Z][a-z]*><intensidade:[A-Z][a-z]*>.txt"
+pprint(load_data.process_name_scheme(name_scheme))
+r = load_data.process_name_scheme(name_scheme)
+
+
+# Funcionando como esperado
+# (find-fline "~/ic/src/new_design/load_data.py" "def list_files")
+load_data.list_files('../../dataset/data/', r[0])
+
+# Funcionando
+# (find-fline "~/ic/src/new_design/load_data.py" "load_data")
+load_data.load_data('../../dataset/data/', "Aluno<participante:\d+>/<atividade:[A-Z][a-z]*><intensidade:[A-Z][a-z]*>.txt")
+#+end_src
+
+** Como cheguei nesta solução
 
 Eu estava utilizando um esquema com list comprehensions para especificar o nome dos arquivos
 a serem carregados na memória pelo pandas.
 No momento em que os dados eram carregados eu adcionava valores para novas colunas que
-inicavam qual era o participante, qual a atividade e qual a intensidade.
+indicavam qual era o participante, qual a atividade e qual a intensidade.
 Esses campos eram futuramente utilizados para selecionar quais dados seriam utilizados nas
 operações.
 
@@ -33,8 +124,6 @@ atividades   = ['Andando', 'Sentado', 'Deitado']
 intensidades = ['Leve', 'Moderado', 'Vigoroso']
 
 p_dir        = ['Aluno'+str(i+1) for i in range(11)]
-
-p_
 
     def __init__(self, dataset_dir  = '~/ic/dataset/data/', extension='.txt'):
         df = pd.DataFrame(columns=['x', 'y', 'z', 'tempo', 'sensor'])
@@ -100,62 +189,3 @@ carregados na memória a partir do 'root_dir'.
 # https://docs.python.org/2/library/os.html#os.listdir
 # https://stackoverflow.com/questions/2212643/python-recursive-folder-read
 # https://docs.python.org/3/library/os.html#os.walk
-
-#+begin_src python :tangle load_data.py
-from os import walk             
-import re
-
-import Pandas as pd
-
-root_dir = "./processed_data/"
-scheme   = "Aluno<participante:\d+>/<atividade:[A-Z][a-z]*><intensidade:[A-Z][a-z]*>.csv"
-
-def load_data(self, root_dir:str, name_scheme:str):
-
-    # Extraindo nomes dos campos de metadados (names) e regexps (rgs) para
-    # encontrar seus valores nos nomes dos arquivos. E uma regexp para
-    # encontrar todos os nomes de arquivos na pasta especificada (text/rg_scheme)
-    text = name_scheme
-    names, rgs = [], []
-    while True:
-	pbegin, pend = text.find('<'), text.find('>')
-	if pbegin == -1: break
-	sub_text     = text[pbegin+1:pend]
-	st_sep       = sub_text.find(':')
-	names       += [sub_text[          :st_sep]]
-	rgs         += [sub_text[st_sep + 1:      ]]
-	text         = text[:pbegin] + rgs[-1] + text[pend + 1:]
-
-    # Contém regexp utilizada para encontrar arquivos que serão
-    # carregados na memória
-    rg_scheme = text
-
-    # Pegando lista de arquivos para carregar na memoria
-    files_to_load = []
-    for root, dirs, files in walk(root_dir):
-        for f in files:
-            if re.search(rg_scheme, str(os.path.join(root, f))):
-                files_to_load.append(os.path.join(root, f))
-
-    for f in files_to_load:
-        f_orig = f
-        
-	# Cria dicionário com campo de metadados e seu valor
-        metad = {}
-	for i in range(len(names)):
-	    f = re.sub(root_dir, "", f)
-	    m = re.search(rgs[i], f)
-	    try:
-                # Corta string pra remover oque já foi 'matched'
-		f = f[m.span()[1]:]
-		metad[names[i]] = m[0]
-	    except AttributeError as e:
-		print(e,'\nO regexp não deve ter dado match')
-
-        df = pd.DataFrame()
-	df.read_csv(f_orig, delim_whitespace=True,
-		    names=['x', 'y', 'z', 'tempo', 'sensor'])\
-          .assign(metad)
-#+end_src
-
-Comecei a me confundir muito com como eu vou tanglar isso aqui.

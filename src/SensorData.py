@@ -138,6 +138,7 @@ class SensorData:
         self.data = df
         self.participantes = participantes
 
+
     def fix_dup(self, remFirst=False):
         """Função para resolver o caso onde em uma mesma classe se encontram
            duas séries temporais. Ou seja, em algum momento o 'timestamp' de
@@ -220,8 +221,6 @@ class SensorData:
 
         self.data = result_df
             
-                    
-            
     def remove_outliers(self):
         df = self.data
 
@@ -240,11 +239,34 @@ class SensorData:
         df = df.reset_index(drop=True)
         self.data = df
 
+    def scale_data(self):
+        # Devo fazer para cada atividade-intensidade individualmente?
+        # ou devo fazer para todos os dados em um mesmo conjunto?
+        #        Professor falou para fazer com todos os dados
+        self.data = self.data.reset_index(drop=True)
+
+        non_data_columns = ['tempo', 'sensor', 'Atividade',
+                            'Intensidade', 'Participante']
+        data = self.data.drop(columns=non_data_columns)
+
+        scaler = StandardScaler().fit(data)
+
+        scaled_data = scaler.transform(data)
+        scaled_data = pd.DataFrame(scaled_data, columns=data.columns)
+        # scaled_data = pd.concat([scaled_data, self.data.loc[:, non_data_columns]],
+        #                         ignore_index=True,
+        #                         axis=1)
+        scaled_data[non_data_columns] = self.data.loc[:, non_data_columns]
+
+        self.data = scaled_data
+
+
     def segment_extract_features(self, window_size=10):
         df = self.data
         df1_out = pd.DataFrame()
 
         for df_local in aip_gen(df):
+            # Porque transformar a coluna tempo em int?
             df_local  = df_local.astype({'tempo': int})
 
             rolling_w = df_local[['x', 'y', 'z', 'tempo']].rolling(window=window_size, center=True)
@@ -601,27 +623,6 @@ class SensorData:
             plt.savefig('plot_error_bar.png', bbox_inches='tight')
         else:
             plt.show()
-
-    def scale_data(self):
-        # Devo fazer para cada atividade-intensidade individualmente?
-        # ou devo fazer para todos os dados em um mesmo conjunto?
-        #        Professor falou para fazer com todos os dados
-        self.data = self.data.reset_index(drop=True)
-
-        non_data_columns = ['tempo', 'sensor', 'Atividade',
-                            'Intensidade', 'Participante']
-        data = self.data.drop(columns=non_data_columns)
-
-        scaler = StandardScaler().fit(data)
-
-        scaled_data = scaler.transform(data)
-        scaled_data = pd.DataFrame(scaled_data, columns=data.columns)
-        # scaled_data = pd.concat([scaled_data, self.data.loc[:, non_data_columns]],
-        #                         ignore_index=True,
-        #                         axis=1)
-        scaled_data[non_data_columns] = self.data.loc[:, non_data_columns]
-
-        self.data = scaled_data
 
     def save_all_data(self, root_dir='./new_data/'):
         participantes = self.data.loc[:, 'Participante'].unique()

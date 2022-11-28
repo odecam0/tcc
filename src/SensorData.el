@@ -235,6 +235,11 @@ sd.segment_extract_features()
 
 «teste wf»  (to ".teste wf")
 
+(epp)
+(defun find-v2a (a b)   (find-wset "12_o_"  a b))
+(defun v () (interactive) (find-v2b '(find-fline "~/ic/src/SensorData.el") '(find-ebuffer "*python3*")))
+(v)
+
 exec(open("SensorData.py").read(), globals())
 sd = SensorData()
 
