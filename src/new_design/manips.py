@@ -18,7 +18,7 @@ def fix_dup(df, remFirst=False):
             # Encontra id onde tempo da série volta para início
             if df_it.loc[id, 'tempo'] < df_it.loc[id-1, 'tempo']:
                 tempo_base = df_it.loc[id-1, 'tempo']
-                id_base    = id
+                id_base    = id - 1
                 break
         else:
             # Caso não haja duas séries na mesma classe
@@ -34,14 +34,14 @@ def fix_dup(df, remFirst=False):
             tempo  = pd.concat([df_it.loc[:id_base-1, 'tempo'],
                                 df_it.loc[id_base:, 'tempo'] + tempo_base])
 
-        # Cria um novo pandas.DataFrame com o novo pandas.Series na
-        # coluna 'tempo'
-        df_aux = df_it.drop(columns=['tempo']).loc[:id_base-1]
-        df_aux['tempo'] = tempo.values
-
-        if df_aux['tempo'].isnull().values.any():
-            set_trace()
-
+        if remFirst:
+            df_aux = df_it.loc[:id_base]
+        else:
+            # Cria um novo pandas.DataFrame com o novo pandas.Series na
+            # coluna 'tempo'
+            df_aux = df_it.drop(columns=['tempo'])
+            df_aux['tempo'] = tempo.values
+            
         df_ret = pd.concat([df_ret, df_aux], ignore_index=True)
 
     return df_ret

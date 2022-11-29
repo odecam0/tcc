@@ -36,6 +36,8 @@ test.raw_data
 
 * Preprocessing data
 
+*Falta filtrar o sensor* !
+
 A ideia para realizar o preprocessamento dos dados irá envolver um módulo com funções
 que manipulas os dados (um tipo padronizado de dados?). E na classe arpc, haverão funções para adcionarem
 funções numa lista de funções que serão utilizadas para afetar os dados contidos em obj.raw_data.
@@ -52,31 +54,55 @@ funções numa lista de funções que serão utilizadas para afetar os dados con
 #+begin_src python
 from ARPC import Arpc
 import manips
+from arpc_utils import aip_gen
+from matplotlib import pyplot as plt
 
 test = Arpc()
 test.load_data('../../dataset/data',
                'Aluno<participante:\d+>/<atividade:[A-Z][a-z]*><intensidade:[A-Z][a-z]*>.txt')
 
-test.raw_data
-manips.fix_dup(test.raw_data)
-manips.fix_dup(test.raw_data, rem_first=True)
-#+end_src
+# ! Se eu der sort no dataframe pelo tempo, não será possível identificar labels que
+# ! possuem duas séries temporais embutidas, pois essa identificação é feita encontrando
+# ! uma amostra onde o tempo é inferior ao tempo da amostra anterior
 
-# bug....
-manips.fix_dup(test.raw_data)
-Traceback (most recent call last):
-  File "<stdin>", line 1, in <module>
-  File "/home/brnm/ic/src/new_design/manips.py", line 39, in fix_dup
-    df_aux = df_it.drop(columns=['tempo']).loc[:id_base-1]
-  File "/usr/lib/python3.10/site-packages/pandas/core/frame.py", line 3977, in __setitem__
-    self._set_item(key, value)
-  File "/usr/lib/python3.10/site-packages/pandas/core/frame.py", line 4171, in _set_item
-    value = self._sanitize_column(value)
-  File "/usr/lib/python3.10/site-packages/pandas/core/frame.py", line 4904, in _sanitize_column
-    com.require_length_match(value, self.index)
-  File "/usr/lib/python3.10/site-packages/pandas/core/common.py", line 561, in require_length_match
-    raise ValueError(
-ValueError: Length of values (1206) does not match length of index (603)
+# (find-fline "~/ic/src/new_design/manips.py")
+# (find-fline "~/ic/src/new_design/manips.py" "# DEBUGGING !")
+test.raw_data
+t = test.raw_data
+t.loc[t['sensor'] == 'a'].drop(columns=['sensor'])
+t.loc[t['sensor'] == 'a'].drop(columns=['sensor']).columns
+ta = t.loc[t['sensor'] == 'a'].drop(columns=['sensor']).reset_index(drop=True)
+ta
+ta.sort_values(['participante', 'atividade', 'intensidade'])
+tas = ta.sort_values(['participante', 'atividade', 'intensidade']).reset_index(drop=True)
+
+# Parece estar funcionando corretamente
+# Seria bom testar plotando as timeseries
+manips.fix_dup(tas)
+manips.fix_dup(tas, remFirst=True)
+
+# =======================================================================
+
+manips.fix_dup(tas)
+#   File "/home/brnm/ic/src/new_design/manips.py", line 48, in fix_dup
+#     df_aux['tempo'] = tempo.values
+# ValueError: Length of values (602) does not match length of index (300)
+
+manips.fix_dup(tas, remFirst=True)
+#   File "/home/brnm/ic/src/new_design/manips.py", line 48, in fix_dup
+#     df_aux['tempo'] = tempo.values
+# ValueError: Length of values (302) does not match length of index (300)
+
+# OFF TOPIC: Eu adoro fazer esses documentos quando
+# 
+#       ( fica legível e combina com como minha mente funciona, |
+#         vai além de instruções, se torna plataforma para dispor o pensamento |
+#         se torna uma expressão doque está passando em minha mente )
+# 
+#            acho muito bacana e fico grato com isso.
+
+# Estou desfocando da tarefa de desbugar a parada
+#+end_src
 
 * Loading raw_data 
 
