@@ -1,5 +1,10 @@
 #+title: Activity Recognition Protocol Framework
 
+
+! Preciso pensar em uma maneira de deixar esta ferramenta independente dos nomes que
+! forem utilizados para cada coluna.
+
+
 Neste documento desejo descrever e desenvolver um framework orientado a objeto em python
 para experimentar com classificação de atividades humanas.
 
@@ -7,24 +12,20 @@ Inicialmente a ideia é criar uma classe com atributos para cada etapa do protoc
 de forma que antes de cada etapa ser executada, o valor do atributo é None, e a próxima
 etapa poderá ser executada somente quando o dado em que depende estiver disponível.
 
-# https://docs.python.org/3/tutorial/classes.html
-#+begin_src python :tangle ./ARPC.py
-from load_data import load_data
+#+transclude: [[file:ARPC.py]]  :src python
 
-class Arpc:
-    def __init__(self):
-        self.raw_data          = None
-        self.preprocessed_data = None
-        self.segmented_data    = None
-        self.featured_data     = None
+# (defun a () (interactive) (find-icfile "src/new_design/ARPC.py"))
 
-    def load_data(self, root_dir:str, name_scheme:str):
-        self.raw_data = load_data(root_dir, name_scheme)
-#+end_src
+# (find-icfile "src/new_design/ARPC.py" "# Preprocessing data")
+# (find-icfile "src/new_design/")
+# (find-icfile "src/new_design/arpc_utils.py")
 
 #+name: arpc test
 #+begin_src python
 import ARPC
+import manips
+from arpc_plot import plot_all
+from arpc_utils import get_acc_data, get_gyr_data
 
 test = ARPC.Arpc()
 
@@ -32,11 +33,118 @@ test = ARPC.Arpc()
 test.load_data('../../dataset/data',
                'Aluno<participante:\d+>/<atividade:[A-Z][a-z]*><intensidade:[A-Z][a-z]*>.txt')
 test.raw_data
+
+test.add_manip(lambda x: manips.fix_dup(x, remFirst=True))
+
+classes = [(1., 'Deitado', 'Moderado')]
+classes += [(4., 'Deitado', i) for i in ['Leve', 'Moderado', 'Vigoroso']]
+classes += [(7., 'Deitado', i) for i in ['Leve', 'Moderado', 'Vigoroso']]
+test.add_manip(lambda x: manips.rotate_class(x, classes, [0, 0, 1]))
+
+test.add_manip(manips.remove_outliers)
+test.add_manip(manips.remove_beginning)
+test.add_manip(manips.scale_data)
+
+test.do_manip()
+
+test.raw_data
+test.preprocessed_data
+
+plot_all(test.raw_data, participantes=['1'])
+plot_all(get_acc_data(test.raw_data), participantes=['1'])
+plot_all(get_gyr_data(test.raw_data), participantes=['1'])
+
+plot_all(test.preprocessed_data, participantes=['1'])
+plot_all(get_acc_data(test.preprocessed_data), participantes=['1'])
+plot_all(get_gyr_data(test.preprocessed_data), participantes=['1'])
 #+end_src
 
-* Preprocessing data
+* Features
 
-*Falta filtrar o sensor* !
+
+
+* Windowing
+
+A ideia aqui é permitir realizar operações nos dados de cada janela.
+O janelamento em pandas é feito utilizando uma classe que é retornada por uma função..
+Mas eu tive dificuldade de acessar e modificar os dados. Acredito que isso ocorre pela forma que o janelamento
+é implementado, utilizando uma classe indexer.. Não são criados novos objetos para cada janela, e sim uma sequencia de
+indices do dataframe para cada janela. Isso é bem inteligente, mas vou ter que driblar isso para conseguir fazer a
+manipulação de dados que gostaria.
+
+Futuramente na etapa de extração das features, algo ocorre. 
+Oque ocorre? Eu utilizo os métodos do Window para adquirir essas features.
+Que que tem? Para modificar os dados das janelas perco acesso ao objeto Window.
+Vai ter que começar a extrair as features na mão?
+Isso, ou dar um jeito de recriar o Window com os dados modificados.
+
+De qualquer forma, a forma que eu estava realizando a extração de características era bem ruim.
+Então reescreve-la é o correto.
+
+# (find-icfile "src/new_design/")
+# (find-icfile "src/new_design/arpc_window.py")
+# (find-icfile "src/new_design/ARPC.py")
+
+#+name: testing window
+#+begin_src python
+import ARPC
+import manips
+from arpc_plot import plot_all
+from arpc_utils import get_acc_data, get_gyr_data
+
+test = ARPC.Arpc()
+
+# Funcionando
+test.load_data('../../dataset/data',
+               'Aluno<participante:\d+>/<atividade:[A-Z][a-z]*><intensidade:[A-Z][a-z]*>.txt')
+test.raw_data
+
+test.add_manip(get_acc_data)
+test.add_manip(lambda x: manips.fix_dup(x, remFirst=True))
+
+classes = [(1., 'Deitado', 'Moderado')]
+classes += [(4., 'Deitado', i) for i in ['Leve', 'Moderado', 'Vigoroso']]
+classes += [(7., 'Deitado', i) for i in ['Leve', 'Moderado', 'Vigoroso']]
+test.add_manip(lambda x: manips.rotate_class(x, classes, [0, 0, 1]))
+
+test.add_manip(manips.remove_outliers)
+test.add_manip(manips.remove_beginning)
+test.add_manip(manips.scale_data)
+
+test.do_manip()
+
+test.preprocessed_data
+
+test.set_windows()
+test.segmented_data 
+test.segmented_data.keys()
+test.segmented_data['1AndandoLeve']
+len(test.segmented_data['1AndandoLeve'])
+test.segmented_data['1AndandoLeve'][0]  
+#+end_src
+
+# Exemplo de uma janela:
+#           x         y         z  tempo sensor atividade intensidade participante
+# 0  1.660363 -0.374177 -1.283886  10093      a   Andando        Leve            1
+# 1  1.646849 -0.378761 -1.285337  10289      a   Andando        Leve            1
+# 2  1.655668 -0.377730 -1.281915  10489      a   Andando        Leve            1
+# 3  1.647765 -0.376928 -1.287204  10691      a   Andando        Leve            1
+# 4  1.635969 -0.366383 -1.289797  10890      a   Andando        Leve            1
+# 5  1.652232 -0.378991 -1.289797  11090      a   Andando        Leve            1
+# 6  1.645475 -0.376469 -1.289693  11291      a   Andando        Leve            1
+# 7  1.666433 -0.387243 -1.284923  11488      a   Andando        Leve            1
+# 8  1.642611 -0.377959 -1.282330  11687      a   Andando        Leve            1
+# 9  1.651888 -0.379105 -1.285649  11890      a   Andando        Leve            1
+
+Ainda estou confuso sobre se ARPC.segmented_data deve possuir dataframes ou matrizes numpy...
+Algo me diz que deve ser matrizes numpy...
+
+* Plotting
+
+# (find-icfile "src/new_design/arpc_plot.py" "def plot_all")
+# (defun p () (interactive) (find-icfile "src/new_design/arpc_plot.py" "def plot_all"))
+
+* Preprocessing data
 
 A ideia para realizar o preprocessamento dos dados irá envolver um módulo com funções
 que manipulas os dados (um tipo padronizado de dados?). E na classe arpc, haverão funções para adcionarem
@@ -45,17 +153,153 @@ funções numa lista de funções que serão utilizadas para afetar os dados con
 # (find-fline "~/ic/src/new_design/manips.py")
 
 # (find-fline "~/ic/src/SensorData.py")
+# (find-fline "~/ic/src/SensorData.el")
 
 # (find-fline "~/ic/src/new_design/arpc_utils.py")
 
 #+transclude: [[file:./manips.py]]  :src python
 
-#+name: teste manips
+** scale_data
+
+# (defun m () (interactive) (find-icfile "src/new_design/manips.py" "def scale_data"))
+
 #+begin_src python
 from ARPC import Arpc
 import manips
 from arpc_utils import aip_gen
 from matplotlib import pyplot as plt
+from arpc_plot import plot_all
+
+test = Arpc()
+test.load_data('../../dataset/data',
+               'Aluno<participante:\d+>/<atividade:[A-Z][a-z]*><intensidade:[A-Z][a-z]*>.txt')
+
+def sorted_sensora_df(df):
+    return df.loc[df['sensor'] == 'a']\
+             .drop(columns=['sensor'])\
+             .sort_values(['participante', 'atividade', 'intensidade'])\
+             .reset_index(drop=True)
+
+manips.scale_data(test.raw_data)
+test.raw_data
+#+end_src
+
+** remove_beginning
+
+# (defun m () (interactive) (find-icfile "src/new_design/manips.py" "def remove_beginning"))
+
+#+begin_src python
+from ARPC import Arpc
+import manips
+from arpc_utils import aip_gen
+from matplotlib import pyplot as plt
+from arpc_plot import plot_all
+
+test = Arpc()
+test.load_data('../../dataset/data',
+               'Aluno<participante:\d+>/<atividade:[A-Z][a-z]*><intensidade:[A-Z][a-z]*>.txt')
+
+def sorted_sensora_df(df):
+    return df.loc[df['sensor'] == 'a']\
+             .drop(columns=['sensor'])\
+             .sort_values(['participante', 'atividade', 'intensidade'])\
+             .reset_index(drop=True)
+
+manips.remove_beginning(test.raw_data)
+#+end_src
+
+** remove_outliers
+
+# https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.boxplot.html
+# fixing remove_outliers
+
+# (defun m () (interactive) (find-icfile "src/new_design/manips.py" "def remove_outliers"))
+
+#+begin_src python
+from ARPC import Arpc
+import manips
+from arpc_utils import aip_gen
+from matplotlib import pyplot as plt
+from arpc_plot import plot_all
+
+test = Arpc()
+test.load_data('../../dataset/data',
+               'Aluno<participante:\d+>/<atividade:[A-Z][a-z]*><intensidade:[A-Z][a-z]*>.txt')
+
+def sorted_sensora_df(df):
+    return df.loc[df['sensor'] == 'a']\
+             .drop(columns=['sensor'])\
+             .sort_values(['participante', 'atividade', 'intensidade'])\
+             .reset_index(drop=True)
+
+for i in aip_gen(test.raw_data.sort_values(['participante', 'atividade', 'intensidade'])):
+    atividade = i.atividade.iloc[0]
+    intensidade = i.intensidade.iloc[0]
+    participante = i.participante.iloc[0]
+    print(participante, atividade, intensidade)
+    i.loc[:, ['x', 'y', 'z']].boxplot()
+    break
+
+plt.show()
+
+df = manips.remove_outliers(sorted_sensora_df(test.raw_data))
+
+for i in aip_gen(df):
+    atividade = i.atividade.iloc[0]
+    intensidade = i.intensidade.iloc[0]
+    participante = i.participante.iloc[0]
+    print(participante, atividade, intensidade)
+    i.loc[:, ['x', 'y', 'z']].boxplot()
+    break
+
+plt.show() # Penso que eu deveria entender matemáticamente este método de remoção de outliers
+
+# Ta funcionando
+#+end_src
+
+** Adapting rotate_class
+
+#+begin_src python
+from ARPC import Arpc
+import manips
+from arpc_utils import aip_gen
+from matplotlib import pyplot as plt
+from arpc_plot import plot_all
+
+test = Arpc()
+test.load_data('../../dataset/data',
+               'Aluno<participante:\d+>/<atividade:[A-Z][a-z]*><intensidade:[A-Z][a-z]*>.txt')
+
+def sorted_sensora_df(df):
+    return df.loc[df['sensor'] == 'a']\
+             .drop(columns=['sensor'])\
+             .sort_values(['participante', 'atividade', 'intensidade'])\
+             .reset_index(drop=True)
+
+df = sorted_sensora_df(test.raw_data)
+plot_all(df, participantes=['1'])
+             # Mudar para passar int
+
+# (find-fline "~/ic/src/new_design/manips.py")
+# (find-fline "~/ic/src/new_design/manips.py" "def rotate_class")
+# (defun m () (interactive) (find-fline "~/ic/src/new_design/manips.py" "def rotate_class"))
+# (find-icfile "src/SensorData.el" ";; Rotacionando os dados")
+
+manips.rotate_class(test.raw_data, [('1', 'Deitado', 'Moderado')], [0,0,1])
+df = manips.rotate_class(sorted_sensora_df(test.raw_data),   
+                    [('2', 'Deitado', 'Moderado')], [0,0,1])
+
+plot_all(df, participantes=['2'])
+#+end_src
+
+** Fixing fix_dups
+#+name: teste manips.fix_dups
+#+begin_src python
+from ARPC import Arpc
+import manips
+from arpc_utils import aip_gen
+from matplotlib import pyplot as plt
+from arpc_plot import plot_all
 
 test = Arpc()
 test.load_data('../../dataset/data',
@@ -76,10 +320,11 @@ ta
 ta.sort_values(['participante', 'atividade', 'intensidade'])
 tas = ta.sort_values(['participante', 'atividade', 'intensidade']).reset_index(drop=True)
 
-# Parece estar funcionando corretamente
-# Seria bom testar plotando as timeseries
 manips.fix_dup(tas)
 manips.fix_dup(tas, remFirst=True)
+
+plot_all(manips.fix_dup(tas), participantes=['1'])                # Deu errado
+plot_all(manips.fix_dup(tas, remFirst=True), participantes=['1']) # Deu certo
 
 # =======================================================================
 

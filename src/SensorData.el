@@ -236,7 +236,7 @@ sd.segment_extract_features()
 «teste wf»  (to ".teste wf")
 
 (epp)
-(defun find-v2a (a b)   (find-wset "12_o_"  a b))
+(defun find-v2b (a b)   (find-wset "12_o_"  a b))
 (defun v () (interactive) (find-v2b '(find-fline "~/ic/src/SensorData.el") '(find-ebuffer "*python3*")))
 (v)
 
@@ -267,6 +267,7 @@ from pprint import pprint
 pprint(list(zip(windows, augmented_windows)))
 
 lst = zip(*augmented_windows)
+[i for i in lst]
 [i for i in list(zip(*augmented_windows))[0] if i.isnull().values.any()]
 [i for i in list(zip(*augmented_windows))[0]]
 

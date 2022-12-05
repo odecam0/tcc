@@ -1,5 +1,17 @@
 import pandas as pd
 
+def get_gyr_data(df):
+    return df.loc[df['sensor']=='g'].reset_index(drop=True)
+
+def get_acc_data(df):
+    return df.loc[df['sensor']=='a'].reset_index(drop=True)
+
+# Não ordeno por tempo porque isso pode interferir com outros algoritmos, e
+# caso haja mais de uma série temporal por classe, estas séries seriam
+# misturadas em uma só
+def sort_metadata(df, names=['participante', 'atividade', 'intensidade']):
+    return df.sort_values(names)
+
 def aip_gen(df, select=[]):
     """
     Generator for activity, intensity and participant pandas DataFrame
@@ -35,43 +47,17 @@ def aip_gen(df, select=[]):
 def p_gen(df, select=[]):
     if len(select)==0:
         try:
-            participantes = df['Participante'].unique()
+            participantes = df['participante'].unique()
         except KeyError as err:
             print('Uma das colunas do dataframe está com nome errado?')
             print('Na função aip_gen')
             print('Coluna que deu errado: ', err.args[0])
 
         for p in participantes:
-            yield df.loc[df['Participante'] == p]
+            yield df.loc[df['participante'] == p]
     else:
         for p in select:
-            yield df.loc[df['Participante'] == p]
-
-def rem_outliers(df):
-    df_new = df.copy()
-
-    eixos = ['x', 'y', 'z']
-
-    for e in eixos:
-
-        Q1 = df_new[e].quantile(0.25)
-        Q3 = df_new[e].quantile(0.75)
-        iQ = Q3 - Q1
-
-        inf = Q1 - 1.5 * iQ
-        sup = Q3 + 1.5 * iQ
-
-        df_new[e] = np.where(
-            df_new[e] > sup,
-            sup,
-            np.where(
-                df_new[e] < inf,
-                inf,
-                df_new[e]
-            )
-        )
-
-    return df_new
+            yield df.loc[df['participante'] == p]
 
 def get_accuracy(cmat):
     result = []

@@ -5,6 +5,8 @@ from scipy.spatial.transform import Rotation as R
 
 from arpc_utils import aip_gen
 
+from sklearn.preprocessing import StandardScaler
+
 def fix_dup(df, remFirst=False):
     """
     Função para resolver o caso onde em uma mesma classe se encontram
@@ -46,14 +48,14 @@ def fix_dup(df, remFirst=False):
 
     return df_ret
 
-def rotate_class(classes, vec):
+def rotate_class(df, classes, vec):
     result = []
 
-    d = list(aip_gen(self.data, select=classes))
-    for i, n in zip(d, range(len(list(d)))):
+    d = list(aip_gen(df, select=classes))
+    for i, n in zip(d, range(len(d))):
         a = [i.loc[:,'x'].mean(),
-                i.loc[:,'y'].mean(),
-                i.loc[:,'z'].mean()]
+             i.loc[:,'y'].mean(),
+             i.loc[:,'z'].mean()]
         b = vec
 
         perp_vec = np.cross(a, b)
@@ -71,8 +73,8 @@ def rotate_class(classes, vec):
 
     result_df = pd.DataFrame()
 
-    for d in  aip_gen(self.data):
-        a, i, p = d.iloc[0][['Atividade', 'Intensidade', 'Participante']]
+    for d in  aip_gen(df):
+        a, i, p = d.iloc[0][['atividade', 'intensidade', 'participante']]
         for r in result:
             if p==r[0] and a==r[1] and i==r[2]:
                 arr = r[3]
@@ -86,35 +88,56 @@ def rotate_class(classes, vec):
         else:
             result_df = pd.concat([result_df, d])
 
-    self.data = result_df
+    return result_df
             
-def remove_outliers():
-    df = self.data
+def _rem_outliers(df):
+    df_new = df.copy()
 
+    eixos = ['x', 'y', 'z']
+
+    for e in eixos:
+
+        Q1 = df_new[e].quantile(0.25)
+        Q3 = df_new[e].quantile(0.75)
+        iQ = Q3 - Q1
+
+        inf = Q1 - 1.5 * iQ
+        sup = Q3 + 1.5 * iQ
+
+        df_new[e] = np.where(
+            df_new[e] > sup,
+            sup,
+            np.where(
+                df_new[e] < inf,
+                inf,
+                df_new[e]
+            )
+        )
+
+    return df_new
+
+def remove_outliers(df):
     df_noout = pd.DataFrame()
 
     for df_remout in aip_gen(df):
-        df_remout = rem_outliers(df_remout)
+        df_remout = _rem_outliers(df_remout)
         df_noout  = pd.concat([df_noout, df_remout])
 
-    self.data = df_noout
+    return df_noout
 
-def remove_beginning(self):
-    # Removing first 10 seconds
-    df = self.data
-    df = df.loc[df['tempo'] >= 10000]
-    df = df.reset_index(drop=True)
-    self.data = df
+def remove_beginning(df, s=10):
+    # Removing first s seconds
+    return df.loc[df['tempo'] >= (s * 1000)]\
+             .reset_index(drop=True)
 
-def scale_data(self):
+def scale_data(df):
     # Devo fazer para cada atividade-intensidade individualmente?
     # ou devo fazer para todos os dados em um mesmo conjunto?
     #        Professor falou para fazer com todos os dados
-    self.data = self.data.reset_index(drop=True)
 
-    non_data_columns = ['tempo', 'sensor', 'Atividade',
-                        'Intensidade', 'Participante']
-    data = self.data.drop(columns=non_data_columns)
+    non_data_columns = ['tempo', 'sensor', 'atividade',
+                        'intensidade', 'participante']
+    data = df.drop(columns=non_data_columns)
 
     scaler = StandardScaler().fit(data)
 
@@ -123,6 +146,8 @@ def scale_data(self):
     # scaled_data = pd.concat([scaled_data, self.data.loc[:, non_data_columns]],
     #                         ignore_index=True,
     #                         axis=1)
-    scaled_data[non_data_columns] = self.data.loc[:, non_data_columns]
+    scaled_data[non_data_columns] = df.loc[:, non_data_columns]
 
-    self.data = scaled_data
+    # ! Eis aqui algo que eu também deveria entender melhor matemáticamente.
+
+    return scaled_data
