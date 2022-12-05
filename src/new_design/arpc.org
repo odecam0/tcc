@@ -61,6 +61,11 @@ plot_all(get_gyr_data(test.preprocessed_data), participantes=['1'])
 
 * Features
 
+# (find-icfile "src/new_design/")
+# (find-icfile "src/new_design/arpc_features.py")
+
+Tenho janelas com N colunas, um subconjunto dessas colunas será utilizado para gerar as features.
+
 
 
 * Windowing
@@ -116,11 +121,25 @@ test.do_manip()
 test.preprocessed_data
 
 test.set_windows()
-test.segmented_data 
+# test.segmented_data # demora mto pra printar
 test.segmented_data.keys()
 test.segmented_data['1AndandoLeve']
 len(test.segmented_data['1AndandoLeve'])
 test.segmented_data['1AndandoLeve'][0]  
+
+from TimeWarpWindow import warp_window
+
+# (find-icfile "src/new_design/TimeWarpWindow.py")
+# Não usei lambda porque utilizo o nome da função no src
+def timewarped(df):
+    result, _ = warp_window(df, 3)
+    return result
+
+# Funcionando
+test.apply_each_window(funcs=[timewarped])
+test.segmented_data.keys()
+test.segmented_data['1AndandoLeve'][0]
+test.segmented_data['timewarped_1AndandoLeve'][0]
 #+end_src
 
 # Exemplo de uma janela:

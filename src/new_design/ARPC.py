@@ -5,6 +5,8 @@ import pandas as pd
 from arpc_utils import sort_metadata
 import arpc_window
 
+from copy import copy
+
 from pdb import set_trace
 
 class Arpc:
@@ -51,4 +53,30 @@ class Arpc:
             self.segmented_data = func(self.preprocessed_data, size)
         else:
             print("Acho que esse tipo de função aí n existe não hein doido.. arpc_window.py, olha lá..")
+
+    # Data augmentation
+    def apply_each_window(self, funcs:list, substitute=False):
+        """
+        Apply every function in funcs on every window,
+        if substitute is True, the results from funcs are stored in segmented_data and the old values are
+        thrown away. Otherwise, the results are stored alongside the old values, in keys like this:
+        <func_applied_name>_<original_key>
+        """
+
+        if not self.segmented_data:
+            print("This function must be called after 'set_windows'")
+            return 
+
+        if substitute:
+            data = {}
+        else:
+            # https://docs.python.org/3/library/copy.html
+            data = copy(self.segmented_data)
+        
+        for func in funcs:
+            for key in self.segmented_data:
+                print('applying', func.__name__, 'to', key, 'data')
+                data[func.__name__ + '_' + key] = [func(i) for i in self.segmented_data[key]] 
+                 
+        self.segmented_data = data
 
