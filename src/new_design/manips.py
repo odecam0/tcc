@@ -7,6 +7,12 @@ from arpc_utils import aip_gen
 
 from sklearn.preprocessing import StandardScaler
 
+def set_vec_module(df, vec_keys=['x', 'y', 'z']):
+    df['module'] = np.sqrt(df.loc[:, vec_keys[0]] ** 2 +
+                           df.loc[:, vec_keys[1]] ** 2 +
+                           df.loc[:, vec_keys[2]] ** 2)
+    return df
+
 def fix_dup(df, remFirst=False):
     """
     Função para resolver o caso onde em uma mesma classe se encontram
