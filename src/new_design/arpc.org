@@ -1,5 +1,9 @@
 #+title: Activity Recognition Protocol Framework
 
+Oquê falta fazer, e é apenas implementar amanhã?
+1. +Outros splits de dados, e fazer as outras classificações+
+2. Funções que recuperem métricas a partir de matrizes de confusão
+3. Os gŕaficos!!!!
 
 ! Preciso pensar em uma maneira de deixar esta ferramenta independente dos nomes que
 ! forem utilizados para cada coluna.
@@ -7,7 +11,6 @@
 
 Neste documento desejo descrever e desenvolver um framework orientado a objeto em python
 para experimentar com classificação de atividades humanas.
-
 Inicialmente a ideia é criar uma classe com atributos para cada etapa do protocolo ARP,
 de forma que antes de cada etapa ser executada, o valor do atributo é None, e a próxima
 etapa poderá ser executada somente quando o dado em que depende estiver disponível.
@@ -34,6 +37,18 @@ plot_all(test.preprocessed_data, participantes=['1'])
 plot_all(get_acc_data(test.preprocessed_data), participantes=['1'])
 plot_all(get_gyr_data(test.preprocessed_data), participantes=['1'])
 #+end_src
+
+* performance metrics
+
+Sobre as métricas
+https://towardsdatascience.com/8-metrics-to-measure-classification-performance-984d9d7fd7aa
+
+1. Accuracy
+2. Precision
+3. Recall
+4. F1-score
+
+Optional: kappa, mcc
 
 * Classification
 
@@ -66,6 +81,19 @@ participantes
 test.classify(ac.train_randomforest, ac.eval_randomforest, multi_data_split1)
 test.classify(ac.train_randomforest, ac.eval_randomforest, lambda x: multi_data_split1(x, participantes))
 
+def multi_split(x, func, select=['1', '2']):
+    r1, r2 = [], []
+    for i in select:
+        aux = func(x, i)
+        r1+= aux[0]
+        r2+= aux[1]
+    return r1, r2
+
+test.classify(ac.train_randomforest, ac.eval_randomforest, ac.loso_split)
+test.classify(ac.train_randomforest, ac.eval_randomforest, lambda x: multi_split(x, ac.loso_split, participantes))
+
+test.classify(ac.train_randomforest, ac.eval_randomforest, ac.semi_loso_split)
+test.classify(ac.train_randomforest, ac.eval_randomforest, lambda x: multi_split(x, ac.semi_loso_split, participantes))
 # Legal, funcionou essa porra...
 
 from importlib import reload
@@ -124,6 +152,7 @@ Será inspirado noque já foi implementado em SensorData
 
 # (find-arpcfile "arpc_classification.py")
 # (find-icfile "src/SensorData.py" "def train_model_split1")
+# (find-icfile "src/SensorData.py" "def train_model_split2")
 
 * Features
 
