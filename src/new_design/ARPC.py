@@ -21,6 +21,10 @@ class Arpc:
         # For preprocessing
         self.manips = []
 
+        # For classification
+        self.trained_models     = None
+        self.confusion_matrixes = None
+
 
     def load_data(self, root_dir:str, name_scheme:str):
         self.raw_data = sort_metadata(load_data(root_dir, name_scheme))
@@ -113,4 +117,26 @@ class Arpc:
         
         self.featured_data = pd.concat(dfs).reset_index(drop=True)
     
+    def classify(self, train_proc, evaluate_proc, datasplit_proc):
+        """
+        Saves 1 trained model, for each datasplit pair returnd from    DATASPLIT_PROC
+        Saves 1 confusion_matrix for each datasplit pair returned from DATASPLIT_PROC
+        Use TRAIN_PROC to train each model with each train data split
+        Use EVALUATE_PROC to get confusion matrix for each trained model
+        MODEL is used to be trained by TRAIN_PROC
+        DATASET is used to get data splits using DATASPLIT_PROC
+        """
 
+        train_splits, eval_splits = datasplit_proc(self.featured_data)
+        # datasplit_proc must return 2-tuple of lists
+
+        trained_models = []
+        for t in train_splits:
+            trained_models += [train_proc(*t)]
+
+        confusion_matrixes = []
+        for t, e in zip(trained_models, eval_splits):
+            confusion_matrixes += [evaluate_proc(t, *e)]
+
+        self.trained_models     = trained_models
+        self.confusion_matrixes = confusion_matrixes

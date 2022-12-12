@@ -37,7 +37,93 @@ plot_all(get_gyr_data(test.preprocessed_data), participantes=['1'])
 
 * Classification
 
-A classificação normalmente é feita em algumas etapas
+(defun org () (interactive) (find-arpcfile "arpc.org" "* Classification"))
+(defun ar () (interactive) (find-arpcfile "ARPC.py" "def classify"))
+(defun ac () (interactive) (find-arpcfile "arpc_classification.py"))
+(defun ex () (interactive) (find-icfile "src/SensorData.py" "def train_model_split1"))
+(defun pg () (interactive) (find-arpcfile "arpc_utils.py" "def p_gen"))
+
+#+begin_src python
+from test import test
+import arpc_classification as ac
+import numpy as np
+test.set_features([np.mean, np.std], columns=['x', 'y', 'z', 'module'])
+test.classify(ac.train_randomforest, ac.eval_randomforest, lambda x: ac.data_split1(x, '2'))
+test.trained_models
+test.confusion_matrixes
+
+def multi_data_split1(x, select=['1', '2']):
+    r1, r2 = [], []
+    for i in select:
+        aux = ac.data_split1(x, i)
+        r1+= aux[0]
+        r2+= aux[1]
+    return r1, r2
+
+participantes = [str(i) for i in range(1, 12)]
+participantes
+
+test.classify(ac.train_randomforest, ac.eval_randomforest, multi_data_split1)
+test.classify(ac.train_randomforest, ac.eval_randomforest, lambda x: multi_data_split1(x, participantes))
+
+# Legal, funcionou essa porra...
+
+from importlib import reload
+reload(ac)
+reload(test)
+#+end_src
+
+Aqui divido a classificação em 3 etapas.
+1. Divisão do dataset em 2 subconjuntos, 1 para treino, e outra para avaliação do modelo treinado.
+2. Treino do modelo. Isso envolve escolher o modelo, ajustar seus parâmetros e treiná-lo com o subconjunto de treino.
+3. Avaliar o modelo adquirindo métricas para a performance, utilizando o subconjunto de dados para avaliação.
+
+Validação cruzada, desta forma, pode ser realizada chamando a mesma rotina multiplas vezes,
+mudando o procedimento de divisão dos dados.
+
+Para avaliar a performance do modelo treinado, a matriz de confusão encapsula todos os dados.
+Métricas importantes podem ser obtidas a partir daí.
+
+# (find-icfile "src/SensorData.py")
+# (find-icfile "src/SensorData.el")
+
+# (find-ic "src/SensorData.el" "full_run")
+# (find-icfile "src/SensorData.py" "kfold_crossval")
+
+# (find-icfile "src/SensorData.py" "def train_model_split1")
+# (find-icfile "src/SensorData.py" "def train_model_split2")
+# (find-icfile "src/SensorData.py" "def train_model_split3")
+
+Histórico de objetos antigos para que seja possível realizar vários experimentos,
+e eventualmente compará-los.
+
+Funções que plotam gráficos baseados no resultado de 1 experimento, ou mais.
+
+# (find-icfile "src/SensorData.py" "def train_model_split1")
+Existe o p_gen, que estará provavelmente em arpc_utils.
+Me surge a questão de "Isto deve ser uma responsabilidade da função que treina o modelo?"
+
+A atividade de classificação depende de 4 dados.
+O dataset que será utilizado, os 3 procedimentos descritos no início desta seção.
+
+Deve haver uma convenção sobre os parâmetros de entrada e valores de retorno dos procedimentos envolvidos.
+
+# (find-arpcfile "ARPC.py")
+# (find-arpcfile "ARPC.py" "def classify")
+# (find-arpcfile "ARPC.py" "self.trained_models")
+# (find-arpcfile "ARPC.py" "self.confusion_matrixes")
+
+# (find-arpcfile "arpc_classification.py")
+
+Em arpc_classification.py devo implementar funções para serem usadas como
+datasplit_proc
+    train_proc
+ evaluate_proc
+então haverão esses 3 tipos de função.
+Será inspirado noque já foi implementado em SensorData
+
+# (find-arpcfile "arpc_classification.py")
+# (find-icfile "src/SensorData.py" "def train_model_split1")
 
 * Features
 
