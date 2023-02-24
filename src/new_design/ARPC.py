@@ -9,10 +9,15 @@ from copy import copy
 
 from arpc_features import merge_features, calc_feature
 
-from pdb import set_trace
+# from pdb import set_trace
+
+from overload import *
 
 class Arpc:
-    def __init__(self):
+    def __init__(self, name='default_name'):
+        # Inform what this experiment is about
+        self.name              = name
+
         self.raw_data          = None
         self.preprocessed_data = None
         self.segmented_data    = None
@@ -24,6 +29,8 @@ class Arpc:
         # For classification
         self.trained_models     = None
         self.confusion_matrixes = None
+
+        self.past_exp           = None
 
 
     def load_data(self, root_dir:str, name_scheme:str):
@@ -117,6 +124,8 @@ class Arpc:
         
         self.featured_data = pd.concat(dfs).reset_index(drop=True)
     
+
+    # Classification
     def classify(self, train_proc, evaluate_proc, datasplit_proc):
         """
         Saves 1 trained model, for each datasplit pair returnd from    DATASPLIT_PROC
@@ -136,7 +145,62 @@ class Arpc:
 
         confusion_matrixes = []
         for t, e in zip(trained_models, eval_splits):
-            confusion_matrixes += [evaluate_proc(t, *e)]
+            confusion_matrixes += [(evaluate_proc(t, *e), t.classes_)]
 
         self.trained_models     = trained_models
         self.confusion_matrixes = confusion_matrixes
+
+
+    # For comparing experiments
+    def start_new_exp(self, reuse='none', name='default_name'):
+        if reuse not in ['none', 'raw', 'preprocessed', 'segmented', 'featured']:
+            print("Argument passed as 'reuse' is not valid: ")
+            return
+
+        new_obj = Arpc(name=name)
+        new_obj.past_exp = self
+
+        if reuse == 'none':
+            return new_obj
+
+        new_obj.raw_data = self.raw_data
+        if reuse == 'raw':
+            return new_obj
+
+        new_obj.preprocessed_data = self.preprocessed_data
+        if reuse == 'preprocessed':
+            return new_obj
+
+        new_obj.segmented_data = self.segmented_data
+        if reuse == 'segmented':
+            return new_obj
+
+        new_obj.featured_data = self.featured_data
+        if reuse == 'featured':
+            return new_obj
+
+
+    @overload
+    def exp_gen(self):
+        exp = self
+        while exp:
+            yield exp
+            exp = exp.past_exp
+    @exp_gen.add
+    def exp_gen(self, depth):
+        for e in self.exp_gen():
+            if depth <= 0:
+                break
+            depth -= 1
+            yield e
+    @exp_gen.add
+    def exp_gen(self, offset, depth):
+        i = 0
+        for e in self.exp_gen():
+            if i < offset:
+                i += 1
+                continue
+            elif depth >= 0:
+                depth -= 1
+                yield e
+        

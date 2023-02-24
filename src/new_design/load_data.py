@@ -4,7 +4,7 @@ import re
 
 import pandas as pd
 
-# https://docs.python.org/3/library/typing.html
+import pdb
 
 def process_name_scheme(name_scheme:str):
     """
@@ -76,3 +76,4 @@ def load_data(root_dir:str, name_scheme:str):
 # root_dir = "./processed_data/"
 # scheme   = "Aluno<participante:\d+>/<atividade:[A-Z][a-z]*><intensidade:[A-Z][a-z]*>.csv"
 # df       = load_data(root_dir, scheme)
+

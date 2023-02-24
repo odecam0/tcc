@@ -12,7 +12,15 @@ from pdb import set_trace
 
 # Data Splits
 
-def data_split1(dataset, select=0):
+def multi_split(x, func, select=['1', '2']):
+    r1, r2 = [], []
+    for i in select:
+        aux = func(x, i)
+        r1+= aux[0]
+        r2+= aux[1]
+    return r1, r2
+
+def data_split1(dataset, select='1'):
     """
     Escolhe o participante com SELECT e retorna 75% dos dados deste
     participante como treino e 25% como avaliação
@@ -32,8 +40,6 @@ def loso_split(dataset, select='1'):
         eval_label = [i + j for i, j in zip(df['atividade'], df['intensidade'])]
 
     other_ones = [i for i in dataset.participante.unique() if i != select]
-
-    set_trace()
 
     train_data = pd.DataFrame()
     train_label = []
