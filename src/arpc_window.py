@@ -19,7 +19,7 @@ def get_rolling_windows(df, size=10, params={}):
 
     for d in aip_gen(df):
         # Assuming all metadata is string
-        metadata_columns = ['participante', 'atividade', 'intensidade'] # modify this to get generic
+        metadata_columns = ['participante', 'atividade', 'intensidade'] # TODO: modify this to get generic
         key = ''
         for c in metadata_columns:
             try:
