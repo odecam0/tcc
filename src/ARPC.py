@@ -145,7 +145,16 @@ class Arpc:
 
         confusion_matrixes = []
         for t, e in zip(trained_models, eval_splits):
-            confusion_matrixes += [(evaluate_proc(t, *e), t.classes_)]
+            # Eu estava tratando como se todos os modelos viesse do scikit learn
+            # considerando que teriam o atributo 'classes_'.
+            #
+            # Agora que estou usando um modelo do keras que não possui este atributo
+            # não sei como recuperar quais serão as classes... acho que vou hardcode
+            # so pra conseguir fazer uma parada adhoc.. :(
+            if not getattr(t, 'classes_', False):
+                confusion_matrixes += [(evaluate_proc(t, *e), np.arange(9))]
+            else:
+                confusion_matrixes += [(evaluate_proc(t, *e), t.classes_)]
 
         self.trained_models     = trained_models
         self.confusion_matrixes = confusion_matrixes
