@@ -52,6 +52,7 @@ def plot_compare_side_err_bar(arpo, get_data_proc, show=True, gray=False, fig_ax
     # Experiments
     values, err_bars, exp_labels = get_data_proc(arpo)
 
+    set_trace()
     # Plotting code
     labels = arpo.confusion_matrixes[0][1]
     if fig_ax:
@@ -90,15 +91,43 @@ def plot_compare_side_err_bar(arpo, get_data_proc, show=True, gray=False, fig_ax
         plt.show()
 
 def get_compare_side_err_barr_data(arpo, depth, metric_func, get_label_func):
-    exps = []
+    """
+    For each last DEPTH experiments in ARPO, a METRIC_FUNCtion is used to get
+    a metric from the confusion matrixes of the experiment, separated by labels
+    returned by GET_LABEL_FUNC.
+
+    3-tuple is returned with an array of means of some metric for each label,
+    array of superior and inferior limits of error bar, and and array of labels.
+
+    Signature of METRIC_FUNC must be METRIC_FUNC(cms, label)
+    where cms is an array with multiple confusion matrixes, and label
+    is one of the possible labels within the confusion matrixes.
+    It must return a 3-tuple with (mean, inferior_limit, superior_limit)
+    inferior and superior limits being the amount to be added and subtracted
+    to the mean to get the error bar.
+
+    METRIC_FUNC can be, for an example: arpc_metrics.get_label_accuracy_mean
+     (find-fline "./arpc_metrics.py" "def get_label_accuracy_mean(cms, label)")
+    """
     exp_names = []
+
+    exps = []
+    # exps is built calculating metrics using METRIC_FUNC for each label and
+    # putting its values into the array, taking the form of:
+    #
+    # [ [[ mean0, inf0, sup0 ], ..., [meanN, infN, supN]]   # <- First experiment
+    #                          . . .
+    #   [[ mean0, inf0, sup0 ], ..., [meanN, infN, supN]] ] # <- Last experiment
     for e in arpo.exp_gen(depth):
+        set_trace()
         exps += [[metric_func(e.confusion_matrixes, l) for l in get_label_func(arpo)]]
         exp_names += [e.name]
 
+    # then numpy is used to rearrange the data in exp
     exps = np.array(exps)
-
-    return exps[:,:,0], exps[:,:,1:].transpose(0,2,1), exp_names
+    mean_values = exps[:,:,0]
+    inf_sup_values = exps[:,:,1:].transpose(0,2,1)
+    return mean_values, inf_sup_values, exp_names
 
 
 def plot_compare_2_set_of_exps(arpo, depth, metric_func, label_func):

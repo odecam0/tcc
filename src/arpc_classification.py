@@ -7,8 +7,38 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn import metrics
 
 import pandas as pd
+import numpy as np
 
-from pdb import set_trace
+import tensorflow as tf
+
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.layers import Flatten
+from keras.layers import Dropout
+from keras.layers import LSTM
+
+from sklearn.metrics import confusion_matrix
+
+# UTILS
+
+# DATA é recebido como um DataFrame apenas com dados
+# relevantes para o treinamento, uma coluna por feature.
+# LABEL é recebido como uma lista de strings.
+def fix_data_lstm(data, label):
+  # One hot encode
+
+  possible_labels = {}
+  for i, x in enumerate(np.unique(label)):
+    possible_labels[x] = i
+  label = [possible_labels[x] for x in label]
+  new_label = tf.keras.utils.to_categorical(label)
+
+  # LSTM recebe como argumento um array de 3 dimensões
+  # de shape -> [batch, timesteps, feature]
+  new_data = data.to_numpy()
+  new_data = new_data.reshape(new_data.shape[0], 1, new_data.shape[1])
+  
+  return new_data, new_label
 
 # Data Splits
 
@@ -80,7 +110,46 @@ def train_randomforest(train_data, train_label):
     rf.fit(train_data, train_label)
     return rf
 
+def train_lstm(train_data, train_label):
+  # Aqui será necessário tratar os dados recebidos para que 
+  # estejam em conformes com como o modelo os espera
+  train_data, train_label = fix_data_lstm(train_data, train_label)
+
+  # Aqui é preciso instanciar o modelo com seus parâmetros e
+  # treina-lo com os dados, e retornalo.
+  n_timesteps = train_data.shape[1]
+  n_features = train_data.shape[2]
+
+  n_outputs = train_label.shape[1]
+
+  verbose = 0
+  epochs = 15
+  batch_size = 64
+  Dropout_value = 0.5
+  
+  model = Sequential()
+  model.add(LSTM(100, input_shape=(n_timesteps,n_features)))
+  model.add(Dropout(Dropout_value))
+  model.add(Dense(100, activation='sigmoid'))
+  model.add(Dense(n_outputs, activation='tanh'))
+  model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+  model.fit(train_data, train_label, epochs=epochs, batch_size=batch_size, verbose=verbose)
+
+  return model
+
 # Eval models
+
+def eval_lstm(trained_model, eval_data, eval_label):
+  eval_data, eval_label = fix_data_lstm(eval_data, eval_label)
+  # Aqui é necessário testar o modelo de forma que ele retorne uma matriz de confusão.
+
+  predicted_label = trained_model.predict(eval_data)
+
+  eval_label = np.argmax(eval_label, axis=-1)
+  predicted_label = np.argmax(predicted_label, axis=-1)
+
+  return confusion_matrix(eval_label, predicted_label)
 
 def eval_randomforest(trained_model, eval_data, eval_label):
     prediction = trained_model.predict(eval_data)

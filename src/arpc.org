@@ -56,7 +56,7 @@ import ARPC
 import arpc_plot as ap
 import arpc_utils as au
 test = ARPC.Arpc(name='Regular Split no augmentation')
-test.load_data('../../dataset/data',
+test.load_data('../dataset/data',
                'Aluno<participante:\d+>/<atividade:[A-Z][a-z]*><intensidade:[A-Z][a-z]*>.txt')
 test.raw_data
 
@@ -252,11 +252,11 @@ from importlib import reload
 def load_test():
     with open("test_arpc_data", 'rb') as file:
         data = pickle.load(file)
-    return_obj = ARPC.Arpc()
-    return_obj.raw_data = data[0]
-    return_obj.preprocessed_data = data[1]
-    return_obj.segmented_data = data[2]
-    return_obj.featured_data = data[3]
+        return_obj = ARPC.Arpc()
+        return_obj.raw_data = data[0]
+        return_obj.preprocessed_data = data[1]
+        return_obj.segmented_data = data[2]
+        return_obj.featured_data = data[3]
     return return_obj
 
 test = load_test()
@@ -299,8 +299,11 @@ data = [test.raw_data,
 	test.featured_data]
 
 import pickle
-with open("test_arpc_data", 'wb') as file:
+with open("featured_arpc_object", 'wb') as file:
     pickle.dump(data, file)
+
+with open("test_arpc_data", 'rb') as file:
+    data = pickle.load(file)
 
 import numpy as np
 cm

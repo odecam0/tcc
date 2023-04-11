@@ -10,7 +10,7 @@ from copy import copy
 
 from arpc_features import merge_features, calc_feature
 
-# from pdb import set_trace
+from pdb import set_trace
 
 from overload import *
 
@@ -29,6 +29,16 @@ class Arpc:
 
         # For classification
         self.trained_models     = None
+        
+        # This atribute should be structured as such:
+        #
+        #  [ [ <confusion_matrix0>, [<labels>] ],
+        #      ...,
+        #    [ <confusion_matrix1>, [<labels>] ] ]
+        #
+        # Where labels are in the order that they appear
+        # on the confusion_matrix, to guarantee that a given
+        # line or column is really talking about a given label
         self.confusion_matrixes = None
 
         self.past_exp           = None
@@ -131,9 +141,8 @@ class Arpc:
         """
         Saves 1 trained model, for each datasplit pair returnd from    DATASPLIT_PROC
         Saves 1 confusion_matrix for each datasplit pair returned from DATASPLIT_PROC
-        Use TRAIN_PROC to train each model with each train data split
+        Use TRAIN_PROC to train each model with each train data split and return it
         Use EVALUATE_PROC to get confusion matrix for each trained model
-        MODEL is used to be trained by TRAIN_PROC
         DATASET is used to get data splits using DATASPLIT_PROC
         """
 
@@ -152,7 +161,8 @@ class Arpc:
             # Agora que estou usando um modelo do keras que não possui este atributo
             # não sei como recuperar quais serão as classes... acho que vou hardcode
             # so pra conseguir fazer uma parada adhoc.. :(
-            if not getattr(t, 'classes_', False):
+            # set_trace()
+            if not any(getattr(t, 'classes_', [False])): #              \/ !this is terrible!
                 confusion_matrixes += [(evaluate_proc(t, *e), np.arange(9))]
             else:
                 confusion_matrixes += [(evaluate_proc(t, *e), t.classes_)]
@@ -190,12 +200,16 @@ class Arpc:
             return new_obj
 
 
+    # Retorna um iterable com cada experimento
+    # realizado.
     @overload
     def exp_gen(self):
         exp = self
         while exp:
             yield exp
             exp = exp.past_exp
+    # Retorna um iterable do experimento atual
+    # até a profundidade indicada
     @exp_gen.add
     def exp_gen(self, depth):
         for e in self.exp_gen():
@@ -203,6 +217,8 @@ class Arpc:
                 break
             depth -= 1
             yield e
+    # Retorna um iterable indicando uma distancia
+    # do experimento atual, e uma profundidade
     @exp_gen.add
     def exp_gen(self, offset, depth):
         i = 0
@@ -210,7 +226,7 @@ class Arpc:
             if i < offset:
                 i += 1
                 continue
-            elif depth >= 0:
+            elif depth >= 0 and depth != 'full':
                 depth -= 1
                 yield e
         

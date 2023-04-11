@@ -1,6 +1,8 @@
 # To extract metrics from a confusion matrix
 import numpy as np
 
+from pdb import set_trace
+
 from overload import *
 
 def call_label_func(cm, label:str, func):
@@ -23,6 +25,10 @@ def label_accuracy(cm, label:int):
     return correct_predictions/total_predictions
 
 @label_accuracy.add
+def label_accuracy(cm, label:np.int64):
+    return label_accuracy(cm, int(label))
+
+@label_accuracy.add
 def label_accuracy(cm, label:str):
     return call_label_func(cm, label, label_accuracy)
 
@@ -33,8 +39,8 @@ def accuracy(cm):
     return correct_predictions/total_predictions
 
 def get_label_accuracy_mean(cms, label):
-    # faltou calcular o intervalo de confiança :) A parte mais cabreira
     t_val = 1.796
+    # set_trace()
     e = np.array([label_accuracy(c, label) for c in cms])
     mean = np.mean(e)
     stderr = np.std(e) / np.sqrt(len(e))
@@ -54,7 +60,6 @@ def get_label_accuracy_mean(cms, label):
 
     y_err = [inf, sup]
 
-    # Agora oque que essa porra vai retornar?
     return mean, inf, sup
 
 
