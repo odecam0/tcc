@@ -19,6 +19,8 @@ from keras.layers import LSTM
 
 from sklearn.metrics import confusion_matrix
 
+from pdb import set_trace
+
 # UTILS
 
 # DATA é recebido como um DataFrame apenas com dados
@@ -37,8 +39,10 @@ def fix_data_lstm(data, label):
   # de shape -> [batch, timesteps, feature]
   new_data = data.to_numpy()
   new_data = new_data.reshape(new_data.shape[0], 1, new_data.shape[1])
-  
-  return new_data, new_label
+
+  # It is important to keep the original labels, to inform the rest of
+  # the process, and to know wich metric is about wich label.
+  return new_data, new_label, list(possible_labels.keys())
 
 # Data Splits
 
@@ -105,6 +109,10 @@ def semi_loso_split(dataset, select='1', pct=.2):
 
 # Train models
 
+# It is important that the model returned by the function has an attribute called
+# classes_, with all the possible classes in the right order. If it is not an SKLearn
+# model, then it must be created explicitly.
+
 def train_randomforest(train_data, train_label):
     rf = RandomForestClassifier(n_estimators=100, random_state=42)
     rf.fit(train_data, train_label)
@@ -113,7 +121,7 @@ def train_randomforest(train_data, train_label):
 def train_lstm(train_data, train_label):
   # Aqui será necessário tratar os dados recebidos para que 
   # estejam em conformes com como o modelo os espera
-  train_data, train_label = fix_data_lstm(train_data, train_label)
+  train_data, train_label, original_label  = fix_data_lstm(train_data, train_label)
 
   # Aqui é preciso instanciar o modelo com seus parâmetros e
   # treina-lo com os dados, e retornalo.
@@ -136,18 +144,24 @@ def train_lstm(train_data, train_label):
 
   model.fit(train_data, train_label, epochs=epochs, batch_size=batch_size, verbose=verbose)
 
+  # To keep compatible with sklearn models
+  model.classes_ = original_label
+
   return model
 
 # Eval models
 
 def eval_lstm(trained_model, eval_data, eval_label):
-  eval_data, eval_label = fix_data_lstm(eval_data, eval_label)
+  eval_data, eval_label, original_label = fix_data_lstm(eval_data, eval_label)
   # Aqui é necessário testar o modelo de forma que ele retorne uma matriz de confusão.
 
   predicted_label = trained_model.predict(eval_data)
 
   eval_label = np.argmax(eval_label, axis=-1)
   predicted_label = np.argmax(predicted_label, axis=-1)
+
+  eval_label = [original_label[i] for i in eval_label]
+  predicted_label = [original_label[i] for i in predicted_label]
 
   return confusion_matrix(eval_label, predicted_label)
 
