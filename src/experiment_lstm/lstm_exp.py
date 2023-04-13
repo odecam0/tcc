@@ -130,7 +130,7 @@ def my_get_plot_data(x):
 ap.plot_compare_side_err_bar(test, my_get_plot_data) 
 
 # ===============================================================================
-# Trecho que carrega objeto já classificado
+# Trecho que carrega objeto já classificado e plota comparação de 3 data splits
 
 import sys
 from pathlib import Path
@@ -168,4 +168,5 @@ import arpc_metrics as am
 def my_get_plot_data(x):
     return ap.get_compare_side_err_barr_data(x, 3, am.get_label_accuracy_mean, lambda x: x.confusion_matrixes[0][1])
 
+ap.plot_compare_err_bar(test, my_get_plot_data, ap.group_labels_by_first_word) 
 ap.plot_compare_side_err_bar(test, my_get_plot_data) 
