@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
+import re
 
 from pdb import set_trace
 
@@ -41,8 +42,6 @@ def plot_all(df, save=False, participantes=[]):
         else:
             plt.show()
 
-import re
-
 def group_labels_by_first_word(labels):
     """
     Receives a simples list of labels and return them grouped and separated by the
@@ -77,8 +76,10 @@ def group_labels_by_first_word(labels):
     
     return groups
 
-
-def plot_compare_err_bar(arpo, get_data_proc, grouping_scheme_proc):
+def plot_compare_err_bar(arpo, get_data_proc, grouping_scheme_proc,
+                         show=True, save_file_name=None, gray=False,
+                         eb_width=1, legend=True, fig_gs=None,
+                         no_background=False):
     """
     GET_DATA_PROC is a procedure receives an Arpc object as parameter and returns a 3-tuple with
     an array of means of some metric for each label, array of superior and inferior limits of error bar,
@@ -97,6 +98,8 @@ def plot_compare_err_bar(arpo, get_data_proc, grouping_scheme_proc):
         ...,
         'FirstWordN': ['RestOfLabel0', ..., 'RestOfLabelM_k']
     }
+    FIG_GS is a tuple like (<figure>, <gridspec>)
+    RETURN_SUBGRIDS and SUB_GRIDS_PARAMS make it possible to acess the subgrids from other calls of this function
     """
     # Experiments data
     values, err_bars, exp_labels = get_data_proc(arpo)
@@ -106,11 +109,13 @@ def plot_compare_err_bar(arpo, get_data_proc, grouping_scheme_proc):
 
     exp_nums = values.shape[0]
 
-    fig = plt.figure(figsize=(12,6))
-    gs = plt.GridSpec(1, len(grouped_labels), figure=fig)
+    if not fig_gs:
+        fig = plt.figure(figsize=(12,6))
+        gs = plt.GridSpec(1, len(grouped_labels), figure=fig)
+    else:
+        fig, gs = fig_gs
 
     colors_error_bar = list(plt.cm.Dark2(np.linspace(0, 1, exp_nums)))
-
 
     # This loop will create a sub gridspec for each label group to make members of the group closer
     # for each gridspec created, it will create its children subplot, one for each full label of the group
@@ -120,12 +125,15 @@ def plot_compare_err_bar(arpo, get_data_proc, grouping_scheme_proc):
 
         # Adding title to each gridspec that separates a group
         ax = fig.add_subplot(sub_gs[:])
+        ax.patch.set_alpha(0)
         ax.axis('off')
         ax.set_title(group, fontsize=15)
 
         for j, label in enumerate(grouped_labels[group]):
 
             ax = fig.add_subplot(sub_gs[0, j])
+            if no_background:
+                ax.patch.set_alpha(0)
 
             ax.spines[['right', 'top', 'left']].set_visible(False)
             ax.set_yticks([])
@@ -146,23 +154,24 @@ def plot_compare_err_bar(arpo, get_data_proc, grouping_scheme_proc):
                 this_value = values[exp, this_index]
                 this_yerr = np.reshape(err_bars[exp, :, this_index], (2, 1))
 
-                ax.errorbar(x, this_value, this_yerr, c=colors_error_bar[exp], fmt='o', label=exp_labels[exp])
+                if gray:
+                    c = 'gray'
+                else:
+                    c = colors_error_bar[exp]
 
-                # if exp == exp_nums - 1 and i == len(grouped_labels) - 1 and j == len(grouped_labels[group]) - 1:
-                #     set_trace()
+                ax.errorbar(x, this_value, this_yerr, c=c, fmt='o', label=exp_labels[exp],
+                            linewidth=eb_width)
 
-    # Here ax will refer to the last subplot axis created by the previous loop, wich is enough to
-    # build a legend for us.
-    handles, _ = ax.get_legend_handles_labels() # We did not pass a label argument when plotting
-    # fig.legend(handles, exp_labels) # We will use the labels returned by GET_DATA_PROC
-    ax.legend() # We will use the labels returned by GET_DATA_PROC
+    # Calling .legend only on the last axis.
+    if legend:
+        ax.legend() 
 
 
     # Here, as the final step, we create a subplot that covers all the parent gridspec, and use
     # it to set a title for the whole figure, and draw the left ticks of the entire figure, that
     # are colored based on how good is the accuracy, also drawing an horizontal line into the whole
     # figure, also colored.
-    ax = fig.add_subplot(gs[:]) #     \/ Here the Title is hardcoded, it should be changed. !TODO!
+    ax = fig.add_subplot(gs[:], facecolor=None) 
 
     # Create colormap from red to green, going through orange. And get 5 colors corresponding to
     # 0%, 25%, 50%, 75%, 100% of accuracy.
@@ -175,6 +184,7 @@ def plot_compare_err_bar(arpo, get_data_proc, grouping_scheme_proc):
     [ax.axhline(y=y, color=c, linestyle='--', alpha=0.5, linewidth=0.7)
      for y, c in zip(percentage_values, red_to_green_values)]
 
+    #             \/ Here the Title is hardcoded, it should be changed. !TODO!
     ax.set_title("Acurácia média de diferentes modelos por atividade e intensidades", y=1.08)
     ax.set_ylim(-0.05, 1) # Has to be the same as the previous subplots
     ax.set_yticks(percentage_values, ['$'+str(int(i*100))+'\%$' for i in percentage_values], fontweight=0.5)
@@ -182,9 +192,11 @@ def plot_compare_err_bar(arpo, get_data_proc, grouping_scheme_proc):
     ax.spines[['right', 'top', 'left', 'bottom']].set_visible(False)
     ax.patch.set_alpha(0) # transparent background
 
+    if show:
+        plt.show()
 
-    plt.savefig('lstm_plot_compare_err_bar.png')
-
+    if save_file_name:
+        plt.savefig(save_file_name)
 
 def get_compare_side_err_barr_data(arpo, depth, metric_func, get_label_func):
     """
@@ -225,7 +237,7 @@ def get_compare_side_err_barr_data(arpo, depth, metric_func, get_label_func):
     return mean_values, inf_sup_values, exp_names
 
 
-def plot_compare_2_set_of_exps(arpo, depth, metric_func, label_func):
+def plot_compare_2_set_of_exps(arpo, depth, metric_func, label_func, file_name=None, show=True):
     """
     DEPTH is used to get the second set of experiments,
     ARPO must have 2*DEPTH experiments
@@ -235,15 +247,21 @@ def plot_compare_2_set_of_exps(arpo, depth, metric_func, label_func):
     for e in arpo.exp_gen(depth+1):
         arpo_g = e
 
-    fig, ax = plt.subplots()
+    fig = plt.figure(figsize=(12,6))
+    gs = plt.GridSpec(1, 3, figure=fig)
 
     def this_get_data(x):
         return get_compare_side_err_barr_data(x, depth, metric_func, label_func)
 
-    plot_compare_side_err_bar(arpo_g, this_get_data, show=False, gray=True, eb_width=2., legend=False, fig_ax=(fig, ax))
-    plot_compare_side_err_bar(arpo,   this_get_data, show=False, eb_width=1.,               fig_ax=(fig, ax))
+    plot_compare_err_bar(arpo_g, this_get_data, group_labels_by_first_word,
+                         show=False, gray=True, eb_width=2., legend=False, fig_gs=(fig,gs))
+    plot_compare_err_bar(arpo,   this_get_data, group_labels_by_first_word,
+                         show=False, eb_width=1., no_background=True, fig_gs=(fig,gs))
 
-    plt.show()
+    if file_name:
+        plt.savefig(file_name)
+    else:
+        plt.show()
 
     
     

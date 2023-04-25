@@ -125,7 +125,7 @@ class Arpc:
             pp = p # previous progress
             p = "{:.0f}%".format(i/len(windows) * 100) # progress
             if p != pp:
-                print(p)
+                print(p, end='\r')
 
             feature_windows = []
             for f in funcs:
