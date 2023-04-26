@@ -17,6 +17,9 @@ def load_group_of_experiments(file_name):
     with open(file_name, 'rb') as file:
         pickled_data = pickle.load(file)
     #   pickled_data --------------> [(<name0>, [<matrixes0>]), ... , (<nameN>, [<matrixesN>])]
+
+    pickled_data = pickled_data[::-1]
+    
     arpo.name = pickled_data[0][0] #     /\           /\
     arpo.confusion_matrixes = pickled_data[0][1] #     |
     
@@ -41,5 +44,11 @@ else:
 
 ap.plot_compare_2_set_of_exps(test, 3, am.get_label_accuracy_mean,
                               lambda x: x.confusion_matrixes[0][1],
-                              file_name=file_name) 
+                              file_name=file_name, gray_experiment_summary_name="experimento sem aumento de dados")
 
+# def my_get_plot_data(x):
+#     return ap.get_compare_side_err_barr_data(x, 3, am.get_label_accuracy_mean,
+#                                              lambda x: x.confusion_matrixes[0][1])
+
+# ap.plot_compare_err_bar(test, my_get_plot_data, ap.group_labels_by_first_word,
+#                         save_file_name=file_name, show=False, metric_used='acurácia') 

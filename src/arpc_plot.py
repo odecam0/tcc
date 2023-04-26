@@ -4,6 +4,8 @@ from matplotlib import pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 import re
 
+from functools import reduce
+
 from pdb import set_trace
 
 def plot_all(df, save=False, participantes=[]):
@@ -79,7 +81,7 @@ def group_labels_by_first_word(labels):
 def plot_compare_err_bar(arpo, get_data_proc, grouping_scheme_proc,
                          show=True, save_file_name=None, gray=False,
                          eb_width=1, legend=True, fig_gs=None,
-                         no_background=False):
+                         no_background=False, caption=False, metric_used=''):
     """
     GET_DATA_PROC is a procedure receives an Arpc object as parameter and returns a 3-tuple with
     an array of means of some metric for each label, array of superior and inferior limits of error bar,
@@ -98,8 +100,11 @@ def plot_compare_err_bar(arpo, get_data_proc, grouping_scheme_proc,
         ...,
         'FirstWordN': ['RestOfLabel0', ..., 'RestOfLabelM_k']
     }
+    an example procedure is: arpc_plot.group_labels_by_firs_word
+
     FIG_GS is a tuple like (<figure>, <gridspec>)
     RETURN_SUBGRIDS and SUB_GRIDS_PARAMS make it possible to acess the subgrids from other calls of this function
+    METRIC_USED is used to inform the caption
     """
     # Experiments data
     values, err_bars, exp_labels = get_data_proc(arpo)
@@ -192,11 +197,51 @@ def plot_compare_err_bar(arpo, get_data_proc, grouping_scheme_proc,
     ax.spines[['right', 'top', 'left', 'bottom']].set_visible(False)
     ax.patch.set_alpha(0) # transparent background
 
+    if caption:
+        number_of_labels = str(len(labels))
+        number_of_groups = str(len(list(grouped_labels.keys())))
+        group_labels = reduce(lambda x,y: x+', '+y, grouped_labels.keys(), '')
+        number_of_experiments = str(exp_nums)
+        number_of_participants = str(len(arpo.confusion_matrixes))
+
+        text = """
+Neste gráfico são exibidas {} classes agrupadas em {} grupos{}. Em cada classe existem {} barras
+de erro, uma para cada experimento. Cada experimento foca em um participante por vez, havendo {}
+participantes, sendo executado uma vez por participante. Para cada experimento, classe e participante
+a {} é calculada, e a média da métrica entre todos os participantes é exibida com uma barra
+de erro com grau de confiança de 75%.
+        """.format(number_of_labels, number_of_groups, group_labels,
+                   number_of_experiments, number_of_participants, metric_used)
+
+        text = fix_text_for_xlabel_caption(text)
+
+        ax.set_xlabel(text, loc='left')
+        plt.tight_layout()
+
     if show:
         plt.show()
 
     if save_file_name:
         plt.savefig(save_file_name)
+
+def fix_text_for_xlabel_caption(text):
+    for i, c in enumerate(text):
+        if c not in [' ', '\n']:
+            text = text[i:]
+            break
+
+    text = text.replace("\n", ' ')
+    line_size = 150
+    line_count = 0
+    for i, c in enumerate(text):
+        if line_count >= line_size and c == ' ':
+            text = text[:i] + '\n' + text[i+1:] 
+            line_count = 0
+        line_count+=1
+
+    text = "\n\n\n" + text
+
+    return text
 
 def get_compare_side_err_barr_data(arpo, depth, metric_func, get_label_func):
     """
@@ -237,7 +282,8 @@ def get_compare_side_err_barr_data(arpo, depth, metric_func, get_label_func):
     return mean_values, inf_sup_values, exp_names
 
 
-def plot_compare_2_set_of_exps(arpo, depth, metric_func, label_func, file_name=None, show=True):
+def plot_compare_2_set_of_exps(arpo, depth, metric_func, label_func, file_name=None, show=True,
+                               gray_experiment_summary_name=''):
     """
     DEPTH is used to get the second set of experiments,
     ARPO must have 2*DEPTH experiments
@@ -256,7 +302,15 @@ def plot_compare_2_set_of_exps(arpo, depth, metric_func, label_func, file_name=N
     plot_compare_err_bar(arpo_g, this_get_data, group_labels_by_first_word,
                          show=False, gray=True, eb_width=2., legend=False, fig_gs=(fig,gs))
     plot_compare_err_bar(arpo,   this_get_data, group_labels_by_first_word,
-                         show=False, eb_width=1., no_background=True, fig_gs=(fig,gs))
+                         show=False, eb_width=1., no_background=True, fig_gs=(fig,gs), caption=True)
+
+    # Get the last used axis, wich is the axis on wich the caption was written in the xlabel
+    ax = plt.gca()
+    text = ax.get_xlabel()
+    text = text + """As barras de erro em cinza por traz do gráfico principal são referentes a outro experimento ({}),
+com a intenção de servir para comparação.""".format(gray_experiment_summary_name)
+    text = fix_text_for_xlabel_caption(text)
+    ax.set_xlabel(text, loc='left')
 
     if file_name:
         plt.savefig(file_name)
