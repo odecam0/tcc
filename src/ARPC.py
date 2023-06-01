@@ -134,20 +134,33 @@ class Arpc:
             dfs += [merge_features(feature_windows)]
         
         self.featured_data = pd.concat(dfs).reset_index(drop=True)
-    
 
     # Classification
-    def classify(self, train_proc, evaluate_proc, datasplit_proc):
+    def classify(self, train_proc, evaluate_proc, datasplit_proc,
+                 featured_data=True, prepare_featured_data_proc=None):
         """
-        Saves 1 trained model, for each datasplit pair returnd from    DATASPLIT_PROC
-        Saves 1 confusion_matrix for each datasplit pair returned from DATASPLIT_PROC
-        Use TRAIN_PROC to train each model with each train data split and return it
+        Saves 1 trained model, for each datasplit pair returnd from
+        DATASPLIT_PROC
+        Saves 1 confusion_matrix for each datasplit pair returned from
+        DATASPLIT_PROC
+        Use TRAIN_PROC to train each model with each train data split
+        and return it
         Use EVALUATE_PROC to get confusion matrix for each trained model
         DATASET is used to get data splits using DATASPLIT_PROC
         """
 
-        train_splits, eval_splits = datasplit_proc(self.featured_data)
-        # datasplit_proc must return 2-tuple of lists
+        if featured_data:
+            train_splits, eval_splits = datasplit_proc(self.featured_data)
+            # datasplit_proc must return 2-tuple of lists
+        elif prepare_featured_data_proc:
+            train_splits, eval_splits = datasplit_proc(
+                *prepare_featured_data_proc(self.segmented_data))
+        else:
+            # TODO! Transformar em um erro pra valer
+            print("Erro na função classify de ARPC.py.\n",
+                  "feature_data = False and",
+                  "prepare_featured_data_proc is not a function")
+            return
 
         trained_models = []
         for t in train_splits:
@@ -159,7 +172,6 @@ class Arpc:
 
         self.trained_models     = trained_models
         self.confusion_matrixes = confusion_matrixes
-
 
     # For comparing experiments
     def start_new_exp(self, reuse='none', name='default_name'):
@@ -188,7 +200,6 @@ class Arpc:
         new_obj.featured_data = self.featured_data
         if reuse == 'featured':
             return new_obj
-
 
     # Retorna um iterable com cada experimento
     # realizado.

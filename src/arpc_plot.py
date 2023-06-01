@@ -211,7 +211,7 @@ participantes, sendo executado uma vez por participante. Para cada experimento, 
 a {} é calculada, e a média da métrica entre todos os participantes é exibida com uma barra
 de erro com grau de confiança de 75%.
         """.format(number_of_labels, number_of_groups, group_labels,
-                   number_of_experiments, number_of_participants, metric_used)
+           number_of_experiments, number_of_participants, metric_used)
 
         text = fix_text_for_xlabel_caption(text)
 
@@ -224,20 +224,27 @@ de erro com grau de confiança de 75%.
     if save_file_name:
         plt.savefig(save_file_name)
 
-def fix_text_for_xlabel_caption(text):
-    for i, c in enumerate(text):
-        if c not in [' ', '\n']:
-            text = text[i:]
-            break
-
+def fix_text_for_xlabel_caption(text, line_size=150):
+    text = re.sub(r'^\s+', '', text) # Erase all whitespace from beginning
+    text = re.sub(r'\s+', ' ', text) # Erase all consecutive multiple whitespaces
+    text = re.sub(r'\s+$', '', text) # Erase all whitespaces from the end
     text = text.replace("\n", ' ')
-    line_size = 150
-    line_count = 0
-    for i, c in enumerate(text):
-        if line_count >= line_size and c == ' ':
-            text = text[:i] + '\n' + text[i+1:] 
-            line_count = 0
-        line_count+=1
+
+    arr1 = text.split(' ')
+    # Get array of lines with apropriate linesize
+    line = ''
+    arr_of_lines = []
+    for word in arr1:
+        if len(line) + len(word) + 1 > line_size:
+            arr_of_lines += [line]
+            line = ''
+        else:
+            line = line + ' ' + word
+    else:
+        arr_of_lines += [line]
+
+    # turn array of lines into text
+    text = reduce(lambda x,y: x+'\n'+y, arr_of_lines, '')
 
     text = "\n\n\n" + text
 

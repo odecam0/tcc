@@ -1,11 +1,23 @@
 ;; This file is used for logging what I am doing between commits.
 
 (code-c-d "twexp" "~/ic/src/experiment_time_warping/")
+(code-c-d "daily" "~/org-roam/daily/")
+(code-c-d "ic" "~/ic/")
 
-;; Now I am doing the caption of 
-;  (find-icfile "src/arpc_plot.py" "def plot_compare_err_bar(")
-;  (find-icfile "src/arpc_plot.py" "def plot_compare_err_bar(" "if caption:")
-;  DONE!
+;; Agora estou escrevendo sobre o experimento, e gerando um pdf..
+;  (find-icfile "documents/data_augmentation.org")
+
+;; Quando li e escreví sobre aumento de dados.
+;  (find-fline "/home/brnm/org-roam/daily/2022-09-29.org")
+;  (find-fline "/home/brnm/org-roam/daily/2022-09-29.org" "* Lendo artigo de <<<data augmentation>>>")
+
+; !!!! Tenho que entender como que põe citação pelo emacs.. no orgmode, sei que tem como..
+
+
+;; 1. Ler oque escrevi sobre aumento de dados
+
+;; Add bibtex to pdf dir
+; (find-fline "~/pdfs/ic-har/")
 
 
 ;; File used for testing
@@ -20,14 +32,5 @@
           (find-file "~/ic/src/experiment_time_warping/default_name_2plots.png")
         (find-file (concat "~/ic/src/experiment_time_warping/" file_name))))
 
-
-;; Have to do the same for
 ;  (find-icfile "src/arpc_plot.py" "def plot_compare_2_set_of_exps(")
-
-;; The thing with this one, is that we have to put something more in the caption, adding to the
-;; previously done caption, so we have to find some mechanism to do this.
-;;
-;; The caption is done in the previous one by seting the x_label.
-;  (find-icfile "src/arpc_plot.py" "ax.set_xlabel(text, loc='left')")
-;; So if we have acess to the same axis that we called when using set_xlabel, we might be able to
-;; do this.
+;  (find-icfile "src/arpc_plot.py" "def fix_text_for_xlabel_caption")
