@@ -47,6 +47,9 @@ def fix_data_lstm(data, label):
   return data, new_label, list(possible_labels.keys())
 
 # Data Splits
+# multi_split and multi_split_window are responsible for executing the data split procedure
+# on diferent selections of participants and storing the data in a conventional way. being:
+#         ( [<Array of training data], [<Corresponding array of testing data] )
 def multi_split(x, func, select=['1', '2']):
     r1, r2 = [], []
     for i in select:
@@ -54,7 +57,6 @@ def multi_split(x, func, select=['1', '2']):
         r1+= aux[0]
         r2+= aux[1]
     return r1, r2
-
 def multi_split_window(x, y, func, select=['1', '2']):
     r1, r2 = [], []
     for i in select:
@@ -94,9 +96,9 @@ def data_split1(dataset: pd.DataFrame, select:str='1'):
 @data_split1.add
 def data_split1(data, label, select='1'):
     # selecionar o participante
-    selected_samples = [re.search(r'^\d+', l).group() == select for l in label]
+    selected_samples = [re.search(r'\d+', l).group() == select for l in label]
     data = data[selected_samples]
-    label = [re.sub(r'^\d+', '', l) for l in label]
+    label = [re.sub(r'\d+', '', l) for l in label]
     label = np.array(label)
     label = label[selected_samples]
 

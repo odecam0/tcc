@@ -44,7 +44,8 @@ else:
 
 ap.plot_compare_2_set_of_exps(test, 3, am.get_label_accuracy_mean,
                               lambda x: x.confusion_matrixes[0][1],
-                              file_name=file_name, gray_experiment_summary_name="experimento sem aumento de dados")
+                              file_name=file_name, gray_experiment_summary_name="experimento sem aumento de dados",
+                              caption=False)
 
  # def my_get_plot_data(x):
 #     return ap.get_compare_side_err_barr_data(x, 3, am.get_label_accuracy_mean,

@@ -81,7 +81,7 @@ def group_labels_by_first_word(labels):
 def plot_compare_err_bar(arpo, get_data_proc, grouping_scheme_proc,
                          show=True, save_file_name=None, gray=False,
                          eb_width=1, legend=True, fig_gs=None,
-                         no_background=False, caption=False, metric_used=''):
+                         no_background=False, caption=False, metric_used='', title=''):
     """
     GET_DATA_PROC is a procedure receives an Arpc object as parameter and returns a 3-tuple with
     an array of means of some metric for each label, array of superior and inferior limits of error bar,
@@ -190,7 +190,7 @@ def plot_compare_err_bar(arpo, get_data_proc, grouping_scheme_proc,
      for y, c in zip(percentage_values, red_to_green_values)]
 
     #             \/ Here the Title is hardcoded, it should be changed. !TODO!
-    ax.set_title("Acurácia média de diferentes modelos por atividade e intensidades", y=1.08)
+    ax.set_title(title, y=1.08)
     ax.set_ylim(-0.05, 1) # Has to be the same as the previous subplots
     ax.set_yticks(percentage_values, ['$'+str(int(i*100))+'\%$' for i in percentage_values], fontweight=0.5)
     ax.set_xticks([])
@@ -222,7 +222,7 @@ de erro com grau de confiança de 75%.
         plt.show()
 
     if save_file_name:
-        plt.savefig(save_file_name)
+        plt.savefig(save_file_name, bbox_inches='tight')
 
 def fix_text_for_xlabel_caption(text, line_size=150):
     text = re.sub(r'^\s+', '', text) # Erase all whitespace from beginning
@@ -290,7 +290,7 @@ def get_compare_side_err_barr_data(arpo, depth, metric_func, get_label_func):
 
 
 def plot_compare_2_set_of_exps(arpo, depth, metric_func, label_func, file_name=None, show=True,
-                               gray_experiment_summary_name=''):
+                               gray_experiment_summary_name='', caption=True):
     """
     DEPTH is used to get the second set of experiments,
     ARPO must have 2*DEPTH experiments
@@ -309,18 +309,19 @@ def plot_compare_2_set_of_exps(arpo, depth, metric_func, label_func, file_name=N
     plot_compare_err_bar(arpo_g, this_get_data, group_labels_by_first_word,
                          show=False, gray=True, eb_width=2., legend=False, fig_gs=(fig,gs))
     plot_compare_err_bar(arpo,   this_get_data, group_labels_by_first_word,
-                         show=False, eb_width=1., no_background=True, fig_gs=(fig,gs), caption=True)
+                         show=False, eb_width=1., no_background=True, fig_gs=(fig,gs), caption=caption)
 
-    # Get the last used axis, wich is the axis on wich the caption was written in the xlabel
-    ax = plt.gca()
-    text = ax.get_xlabel()
-    text = text + """As barras de erro em cinza por traz do gráfico principal são referentes a outro experimento ({}),
-com a intenção de servir para comparação.""".format(gray_experiment_summary_name)
-    text = fix_text_for_xlabel_caption(text)
-    ax.set_xlabel(text, loc='left')
+    if caption:
+        # Get the last used axis, wich is the axis on wich the caption was written in the xlabel
+        ax = plt.gca()
+        text = ax.get_xlabel()
+        text = text + """As barras de erro em cinza por traz do gráfico principal são referentes a outro experimento ({}),
+    com a intenção de servir para comparação.""".format(gray_experiment_summary_name)
+        text = fix_text_for_xlabel_caption(text)
+        ax.set_xlabel(text, loc='left')
 
     if file_name:
-        plt.savefig(file_name)
+        plt.savefig(file_name, bbox_inches='tight')
     else:
         plt.show()
 
