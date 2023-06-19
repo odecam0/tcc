@@ -125,9 +125,9 @@ def loso_split(dataset, select='1'):
     return [(train_data, train_label)], [(eval_data, eval_label)]
 @loso_split.add
 def loso_split(data, label, select='1'):
-    selected_samples = [re.search(r'^\d+', l).group() == select for l in label]
+    selected_samples = [re.search(r'\d+', l).group() == select for l in label]
     X_test = data[selected_samples]
-    label = [re.sub(r'^\d+', '', l) for l in label]
+    label = [re.sub(r'\d+', '', l) for l in label]
     label = np.array(label)
     y_test = label[selected_samples]
 
@@ -166,9 +166,9 @@ def semi_loso_split(data, label, select='1', pct=.2):
     #  amostras aleatórias que serão adcionados nos dados de teste.
     #  Esta seleção será feita em forma de uma lista com True correspondendo
     #  aos dados selecionados. Fancy indexing
-    selected_samples = [re.search('^\d+', l).group() == select for l in label]
+    selected_samples = [re.search('\d+', l).group() == select for l in label]
     X_test = data[selected_samples]
-    label = [re.sub(r'^\d+', '', l) for l in label]
+    label = [re.sub(r'\d+', '', l) for l in label]
     label = np.array(label)
     y_test = label[selected_samples]
 
