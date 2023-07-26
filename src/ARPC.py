@@ -30,7 +30,7 @@ class Arpc:
         # For classification
         self.trained_models     = None
         
-        # This atribute should be structured as such:
+        # This atribute should be structured like this:
         #
         #  [ [ <confusion_matrix0>, [<labels>] ],
         #      ...,
@@ -135,6 +135,7 @@ class Arpc:
         
         self.featured_data = pd.concat(dfs).reset_index(drop=True)
 
+
     # Classification
     def classify(self, train_proc, evaluate_proc, datasplit_proc,
                  featured_data=True, prepare_featured_data_proc=None):
@@ -173,6 +174,7 @@ class Arpc:
         self.trained_models     = trained_models
         self.confusion_matrixes = confusion_matrixes
 
+
     # For comparing experiments
     def start_new_exp(self, reuse='none', name='default_name'):
         if reuse not in ['none', 'raw', 'preprocessed', 'segmented', 'featured']:
@@ -200,6 +202,7 @@ class Arpc:
         new_obj.featured_data = self.featured_data
         if reuse == 'featured':
             return new_obj
+
 
     # Retorna um iterable com cada experimento
     # realizado.

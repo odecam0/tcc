@@ -20,8 +20,8 @@ def load_group_of_experiments(file_name):
 
     pickled_data = pickled_data[::-1]
     
-    arpo.name = pickled_data[0][0] #     /\           /\
-    arpo.confusion_matrixes = pickled_data[0][1] #     |
+    arpo.name = pickled_data[0][0]
+    arpo.confusion_matrixes = pickled_data[0][1]
     
     for exp in pickled_data[1:]:
         arpo = arpo.start_new_exp(name=exp[0])
