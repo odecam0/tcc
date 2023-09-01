@@ -42,6 +42,7 @@ class Arpc:
         self.confusion_matrixes = None
 
         self.past_exp           = None
+        #Arpc.__init__ end
 
 
     def load_data(self, root_dir:str, name_scheme:str):
@@ -83,7 +84,7 @@ class Arpc:
 
 
     # Data augmentation
-    def apply_each_window(self, funcs:list, substitute=False):
+    def apply_each_window(self, funcs:list, substitute=False, merge=False):
         """
         Apply every function in funcs on every window,
         if substitute is True, the results from funcs are stored in segmented_data and the old values are
@@ -101,10 +102,16 @@ class Arpc:
             # https://docs.python.org/3/library/copy.html
             data = copy(self.segmented_data)
         
-        for func in funcs:
-            for key in self.segmented_data:
-                print('applying', func.__name__, 'to', key, 'data')
-                data[func.__name__ + '_' + key] = [func(i) for i in self.segmented_data[key]] 
+        if merge:
+            for func in funcs:
+                for key in self.segmented_data:
+                    print('applying', func.__name__, 'to', key, 'data')
+                    data[key] += [func(i) for i in self.segmented_data[key]] 
+        else:
+            for func in funcs:
+                for key in self.segmented_data:
+                    print('applying', func.__name__, 'to', key, 'data')
+                    data[func.__name__ + '_' + key] = [func(i) for i in self.segmented_data[key]] 
                  
         self.segmented_data = data
 
