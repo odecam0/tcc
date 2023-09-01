@@ -120,7 +120,8 @@ def plot_compare_err_bar(arpo, get_data_proc, grouping_scheme_proc,
     else:
         fig, gs = fig_gs
 
-    colors_error_bar = list(plt.cm.Dark2(np.linspace(0, 1, exp_nums)))
+    # colors_error_bar = list(plt.cm.Dark2(np.linspace(0, 1, exp_nums)))
+    colors_error_bar = ['red', 'blue', 'green']
 
     # This loop will create a sub gridspec for each label group to make members of the group closer
     # for each gridspec created, it will create its children subplot, one for each full label of the group
@@ -308,6 +309,7 @@ def plot_compare_2_set_of_exps(arpo, depth, metric_func, label_func, file_name=N
 
     plot_compare_err_bar(arpo_g, this_get_data, group_labels_by_first_word,
                          show=False, gray=True, eb_width=2., legend=False, fig_gs=(fig,gs))
+
     plot_compare_err_bar(arpo,   this_get_data, group_labels_by_first_word,
                          show=False, eb_width=1., no_background=True, fig_gs=(fig,gs), caption=caption)
 
