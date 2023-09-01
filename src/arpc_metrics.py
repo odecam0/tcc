@@ -5,6 +5,15 @@ from pdb import set_trace
 
 from overload import *
 
+from functools import reduce
+
+def get_accuracy_mean_from_all_exps(arpo):
+    """Given an Arpc object, this function will acess all the
+     confusion_matrixes in the object, calculate its accuracies
+     and return the mean between them"""
+
+    return reduce(lambda x, y: x + accuracy(y), arpo.confusion_matrixes, 0) / len(arpo.confusion_matrixes)
+
 def call_label_func(cm, label:str, func):
     for i in range(len(cm[1])):
         if cm[1][i] == label:
