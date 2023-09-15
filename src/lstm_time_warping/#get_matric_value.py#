@@ -30,7 +30,6 @@ gaen = get_all_experiments_names
 gaen(test)
 
 def get_experiment_by_name(arpo, name):
-    exp = ""
     for e in arpo.exp_gen():
         if e.name == name:
             exp = e

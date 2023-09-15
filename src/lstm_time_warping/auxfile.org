@@ -1,0 +1,29 @@
+Mesmo arquivo sendo carregado na memória:
+(find-tccdalstmfile "plot_dataaug_from_file.py" "test = ie.load_group_of_experiments(\"dataaug_classified_arpos\")")
+(find-tccdalstmfile "get_matric_value.py"       "test = ie.load_group_of_experiments(\"dataaug_classified_arpos\")")
+
+(find-tccdalstmfile "get_matric_value.py" "def get_all_experiments_names(arpo):")
+(find-tccdalstmfile "get_matric_value.py" "def get_experiment_by_name(arpo, name):")
+(find-tccdalstmfile "get_matric_value.py" "def save_sum_of_confusion_matrixes(arpo, filename, normalize=False):")
+
+
+Os dados da matriz de confusão e do gráfico não estão batendo.
+Nem 'sln' nem 'sld' têm colunas completamente zeradas.
+# (find-tccsfile "/lstm_time_warping/sln_cms.png")
+# (find-tccsfile "/lstm_time_warping/sld_cms.png")
+# (find-tccdalstmfile "lstm-dataaug-comparisson.png")
+
+
+(find-tccdalstmfile "plot_dataaug_from_file.py" "ap.plot_compare_2_set_of_exps(")
+(find-tccsfile      "/arpc_plot.py"             "def plot_compare_2_set_of_exps(")
+(find-tccsfile "/arpc_plot.py" "        return get_compare_side_err_barr_data(x, depth, metric_func, label_func)")
+(find-tccdalstmfile "plot_dataaug_from_file.py" "am.get_label_accuracy_mean")
+(find-tccsfile "/arpc_metrics.py" "def get_label_accuracy_mean(cms, label):")
+
+(find-tccsfile "/arpc_metrics.py" "    e = np.array([label_accuracy(c, label) for c in cms])")
+
+
+# Convenções
+  (find-tccsfile "/arpc_metrics.py" "# This module regards the confusion matrix being passed around as a iterable")
+
+
